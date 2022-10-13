@@ -1,0 +1,53 @@
+- name: clone fidesdemo repo
+  git:
+    repo: https://github.com/ethyca/fidesdemo
+    dest: /home/ubuntu/fidesdemo
+    update: yes
+    force: yes
+  register: clone_fidesdemo
+
+- name: install fidesdemo build essentials
+  apt:
+    name: '{{item}}'
+    state: present
+  with_items:
+    - build-essential
+    - make
+    - python3.10-venv
+    - python3.10-dev
+  become: yes
+
+- name: install fidesdemo virtual environment
+  shell: make install
+  args:
+    chdir: /home/ubuntu/fidesdemo
+    creates: /home/ubuntu/fidesdemo/venv/
+
+- name: fidesdemo systemd user unit is in place
+  copy:
+    src: fidesdemo.service
+    dest: /home/ubuntu/.config/systemd/user/fidesdemo.service
+  register: fidesdemo_service
+
+- name: enable fidesdemo systemd service "by default"
+  systemd:
+    name: fidesdemo
+    scope: user
+    enabled: yes
+    daemon_reload: yes
+
+- name: restart fidesdemo if there were changes
+  systemd:
+    name: fidesdemo
+    scope: user
+    state: restarted
+  when: fidesdemo_service.changed or clone_fidesdemo.changed
+
+- name: wait for fidesdemo ports to come up
+  wait_for:
+    port: '{{item}}'
+  with_items:
+    - 8080
+    - 3000
+    - 4000
+    - 9090

@@ -1,0 +1,12 @@
+## Files
+*.log
+*.pot
+*.pyc
+
+## Dirs
+env/
+__pycache__/
+staticfiles/
+
+
+

@@ -1,0 +1,315 @@
+<br/>
+<h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
+<br/>
+
+<h3>DRP Cert Test Suite</h3>
+
+<p>Version 0.5 - Updated October 2022</p>
+
+<p>See also <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
+
+<br/>
+
+<p><b>1. &nbsp;	GET .well-known/data-rights.json</b></p>
+<ul>
+    <li>Covered Business's domain SHOULD have a /.well-known/data-rights.json</li>
+    <li>Discovery Endpoint MUST be valid JSON</li>
+    <li>Discovery Endpoint MUST contain a version field (currently 0.5)</li>
+    <li>Discovery Endpoint MUST provide an API base
+        <ul>
+            <li>API base MUST be valid for subsequent calls</li>
+        </ul>
+    </li>
+    <li>Discovery Endpoint MUST provide a list of supported actions</li>
+    <li>Discovery Endpoint MAY contain a user_relationships hint set</li>
+    <li>Discovery Endpoint SHOULD NOT contain additional undefined fields</li>
+</ul>
+<br/>
+
+<p><b>2. &nbsp; POST /exercise</b></p>
+<ul>
+    <li>Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
+    <li>Regime: [ ccpa | voluntary ]</li>
+    <li>All calls MUST return a Data Rights Status object for all actions listed in .well-known/data-rights.json</li>
+    <li>Values of fields may vary, see below</li>
+    <li>Test all 6 x 2 permutations, if supported:
+        <ul>
+            <li>POST /exercise, { action: access, regime: ccpa } </li>
+            <li>POST /exercise, { action: access, regime: voluntary } </li>
+            <li>POST /exercise, { action: deletion, regime: ccpa } </li>
+            <li>POST /exercise, { action: deletion, regime: voluntary } </li>
+            <li>POST /exercise, { action: sale:opt_out, regime: ccpa } </li>
+            <li>POST /exercise, { action: sale:opt_out, regime: voluntary } </li>
+            <li>POST /exercise, { action: sale:opt_in, regime: ccpa } </li>
+            <li>POST /exercise, { action: sale:opt_in, regime: voluntary } </li>
+        </ul>
+        <span style="color: AAA; font-style: italic;">
+        <br/>
+        Deprecated/deferred:<br/>
+        <ul>
+            <li>POST /exercise, { action: access:categories, regime: ccpa } </li>
+            <li>POST /exercise, { action: access:categories, regime: voluntary } </li>
+            <li>POST /exercise, { action: access:specific, regime: ccpa } </li>
+            <li>POST /exercise, { action: access:specific, regime: voluntary } </li>
+        </ul>
+        </span>
+    </li>
+</ul>
+
+<ul>
+    <li>Returns a Data Rights Status object</li>
+    <li>Data Rights Status object MUST contain field “request_id”
+        <ul>
+            <li>String which is unique within the scope of the AA:CB relationship</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MUST contain field “received_at”
+        <ul>
+            <li>“received_at” is an RFC3339 string (ISO time format)</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MUST contain “status” field
+        <ul>
+            <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+            <li>allowable status varies with action; see below</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MAY contain “reason” field
+        <ul>
+            <li>“reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+            <li>allowable reason varies with status; see below</li>
+        </ul>
+    </li>
+    <li>Additional/optional fields - for now, no additional or optional fields</li>
+    <li>Additional unknown fields - throw a warning</li>
+</ul>
+<br/>
+
+<p><b>2.1. &nbsp; POST /exercise, { action: “access”, regime: “ccpa” } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+</ul>
+<br/>
+
+<p><b>2.2. &nbsp; POST /exercise, { action: access, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+</ul>
+<br/>
+
+<p><b>2.3. &nbsp; POST /exercise, { action: deletion, regime: ccpa } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+</ul>
+<br/>
+
+<p><b>2.4. &nbsp; POST /exercise, { action: deletion, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+</ul>
+<br/>
+
+<p><b>2.5. &nbsp; POST /exercise, { action: sale:opt_out, regime: ccpa } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+</ul>
+<br/>
+
+<p><b>2.6. &nbsp; POST /exercise, { action: sale:opt_out, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+</ul>
+<br/>
+
+<p><b>2.7. &nbsp; POST /exercise, { action: sale:opt_in, regime: ccpa } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+</ul>
+<br/>
+
+<p><b>2.8. &nbsp; POST /exercise, { action: sale:opt_in, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+</ul>
+<br/>
+
+<span style="color: AAA; font-style: italic;">
+Deprecated/deferred:<br/>
+
+<p><b>2.9. &nbsp; POST /exercise, { action: access:categories, regime: ccpa } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>SHOULD contain a field “categories”, listing supported data categories</li>
+    <li>TBD - enumerate allowable values for categories</li>
+</ul>
+<br/>
+
+<p><b>2.10. &nbsp; POST /exercise, { action: access:categories, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    <li>If status == “open” | “in_progress” SHOULD contain a field “categories”, listing supported data categories</li>
+    <li>TBD - enumerate allowable values for categories</li>
+</ul>
+<br/>
+
+<p><b>2.11. &nbsp; POST /exercise, { action: “access:specific”, regime: “ccpa” } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>TBD - do we need to provide a “category” field with a value from the previous call?</li>
+</ul>
+<br/>
+
+<p><b>2.12. &nbsp; POST /exercise, { action: access:specific, regime: voluntary } </b></p>
+<ul>
+    <li>Status: “open” | “in_progress” | “denied”</li>
+    <li>If status == “open”, reason SHOULD be “none”</li>
+    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    <li>TBD - do we need to provide a “category” field with a value from the previous call?</li>
+</ul>
+<br/>
+
+<p><b>2.13. &nbsp; multiple actions in a single request,
+ e.g. POST /exercise, { action: [access, sale:opt_out], regime: ccpa } </b></p>
+<ul>
+    <li>TBD - enumerate allowable combinations and allowable responses</li>
+</ul>
+<br/>
+</span>
+
+<p><b>3. &nbsp; GET /status</b></p>
+<ul>
+    <li>Returns a Data Rights Status object</li>
+    <li>Data Rights Status object MUST contain field “request_id”
+        <ul>
+            <li>request_id value should match the value passed in</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MUST contain field “received_at”
+        <ul>
+            <li>“received_at” is an RFC3339 string (ISO time format)</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MUST contain “status” field
+        <ul>
+            <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+            <li>allowable status varies with action; see below</li>
+        </ul>
+    </li>
+    <li>Data Rights Status object MAY contain “reason” field
+        <ul>
+            <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+            <li>allowable reason varies with status; see below</li>
+        </ul>
+    </li>
+    <li>Additional/optional fields - for now, no additional or optional fields</li>
+    <li>Additional unknown fields - throw a warning
+</ul>
+<br/>
+
+<p><b>3.1 &nbsp; GET /status  fulfilled</b></p>
+<ul>
+    <li>Additional fields: “results_url”, “expires_at”</li>
+    <li>Final</li>
+</ul>
+<br/>
+
+<p><b>3.2 &nbsp; GET /status  denied</b></p>
+<ul>
+    <li>“reason” allowable values: "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+    <li>Additional fields: “processing_details”</li>
+    <li>Final for all reasons except "too_many_requests"</li>
+</ul>
+<br/>
+
+<p><b>3.3 &nbsp; GET /status  expired</b></p>
+<ul>
+    <li>The time is currently after “expires_at” in the request</li>
+    <li>Final</li>
+</ul>
+<br/>
+
+<p><b>3.4 &nbsp; GET /status  revoked</b></p>
+<ul>
+    <li>Final</li>
+</ul>
+<br/>
+
+<span style="color: AAA; font-style: italic;">
+Deprecated/deferred:<br/>
+
+<p><b>3.5 &nbsp; need_user_verification state flow</b></p>
+<ul>
+    <li>TBD</li>
+</ul>
+<br/>
+</span>
+
+<span style="color: AAA; font-style: italic;">
+Deprecated/deferred:<br/>
+
+<p><b>4 &nbsp; POST /revoke</b></p>
+<ul>
+<li>Returns a Data Rights Status object</li>
+<li>Data Rights Status object MUST contain field “request_id”
+    <ul>
+        <li>request_id value should match the value passed in </li>
+    </ul>
+</li>
+<li>Data Rights Status object MUST contain field “received_at”
+    <ul>
+        <li>“received_at” is an RFC3339 string (ISO time format)</li>
+    </ul>
+</li>
+<li>Data Rights Status object MUST contain “status” field
+    <ul>
+        <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+        <li>allowable status varies with action; see below</li>
+    </ul>
+</li>
+<li>Data Rights Status object MAY contain “reason” field
+    <ul>   
+        <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+        <li>allowable reason varies with status; see below</li>
+    </ul>
+</li>
+<li>Additional optional fields 
+    <ul>
+        <li>TBD - enumerated in DRP spec, some have enumerated values for their fields</li>
+    </ul>
+</li>
+<li>Additional unknown fields - throw a warning
+<li>TBD - status should be ‘revoked’ only ?</li>
+</ul>
+<br/>
+</span>
+
+<br/>
+<br/>

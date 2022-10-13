@@ -1,0 +1,12 @@
+[Unit]
+Description=github.com/ethyca/fidesdemo
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/make demo
+WorkingDirectory=/home/ubuntu/fidesdemo
+ExecStop=/usr/bin/docker-compose down
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

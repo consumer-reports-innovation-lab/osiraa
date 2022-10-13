@@ -1,0 +1,25 @@
+---
+- name: set up compute instance for running docker-compose applications
+  hosts: all
+
+  roles:
+  - role: docker-ce
+    become: yes
+  - role: fidesdemo
+    become: no
+  - role: osiraa
+    become: no
+
+  pre_tasks:
+  - name: install SSH keys
+    authorized_key:
+      user: ubuntu
+      key: '{{item}}'
+    with_file:
+      - keys/rrix.pub
+      - keys/john.pub
+
+  post_tasks:
+  - name: inform user to create OSIRAA superuser
+    debug:
+      msg: "Looks like FidesOps and OSIRAA are running. log on to the instance and run `cd osiraa && docker compose run web python manage.py createsuperuser` to configure OSIRAA web admin access!"

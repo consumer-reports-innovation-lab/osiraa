@@ -1,0 +1,26 @@
+<br/>
+<h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
+<br/>
+<h3>DRP Data Privacy Request Sent</h3>
+
+<p><span style="display: inline-block; width: 160px;"><b>Request Url:</b></span> {{request_url}}</p>
+<p><span style="display: inline-block; width: 160px;"><b>Response Code:</b></span> {{response_code}}</p>
+<br/>
+
+<p><b>Response Payload:</b></p>
+<p>{{response_payload}}</p>
+<br/>
+
+<p><b>Test Results:</b></p>
+<p>
+    {% for test_result in test_results %}
+        <span style="display: inline-block; width: 360px;">{{test_result.name}}:</span>{{test_result.result}}</span><br/>
+    {% endfor %}
+</p>
+<br/>
+
+<form action="data_rights_request_sent_return" method="POST" >
+    {% csrf_token %}
+    <input type="submit" value="Okay">
+</form>
+<br/>

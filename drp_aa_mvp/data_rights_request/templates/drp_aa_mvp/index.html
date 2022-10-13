@@ -1,0 +1,20 @@
+<br/>
+<h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
+<br/>
+
+<h3>Version 0.5.0 - Updated October 2022</h3>
+
+<p><b>How to Use this App:</b><br/>
+OSIRAA (Open Source Implementer's Reference Authorized Agent) is test suite designed to simulate the role of an Authorized Agent in a Digital Rights Protocol (DRP) environment.    The application tests for the availability, correctness and completeness of API endpoints of a Privacy Infrastructure Provider (PIP) or Covered Business (CB) partner application.  See <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a> for more info on DRP system roles and API specification.</p>
+
+<p><b><a href="/admin/">Admin Tool</a></b><br/>
+A user may model a PIP or Covered Business in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser in the usual way before you can administer data configurations.  For version 0.5, a covered business requires a Discovery Endpoint, Api Secret and Auth Bearer Token, to be supplied by the PIP/CB parter.
+</p>
+
+<p><a href="/reporting/"><b>Cert Tests Definitions</b></a><br/>
+The Digital Rights Protocol is centered on a set of API calls between an Authorized Agent and a PIP or Covered Business, on behalf of a User exercising his or her digital rights.</p>
+
+<p><a href="/data_rights_request/"><b>Run Tests Against a PIP or Covered Business API Endpoint</b></a><br/>
+First select a PIP or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  Discover, Exercise and Status.  Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool.</p>  
+
+<p>Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the the response is valid json, it test for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.</p>

@@ -1,0 +1,23 @@
+- name: run `loginctl enable-linger` to ensure user processes stay active
+  shell: loginctl enable-linger ubuntu
+
+- name: set up docker-ce apt source
+  apt_repository:
+    filename: docker
+    repo: deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu   jammy stable
+
+- name: set up docker-ce gpg key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /etc/apt/keyrings/docker.gpg
+
+- name: apt install docker-compose and git
+  apt:
+    name: '{{item}}'
+    state: latest
+    update_cache: yes
+  with_items:
+  - docker-compose-plugin # needed for 2.0 syntax... ugh.
+  - docker-compose
+  - git
+  - rsync

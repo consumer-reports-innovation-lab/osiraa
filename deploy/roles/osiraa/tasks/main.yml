@@ -1,0 +1,40 @@
+---
+- name: copy local osiraa checkout to instance host
+  synchronize:
+    src: '{{playbook_dir}}/../'
+    dest: /home/ubuntu/osiraa/
+  register: copy_osiraa
+
+# TODO: install an environment file with secrets, override settings.py SECURITY WARNINGs
+
+- name: docker compose build osiraa
+  shell: docker compose build
+  args:
+    chdir: /home/ubuntu/osiraa/
+  when: copy_osiraa.changed
+
+- name: install osiraa systemd service
+  copy:
+    src: osiraa.service
+    dest: /home/ubuntu/.config/systemd/user/osiraa.service
+  register: osiraa_service_file
+
+- name: enable osiraa systemd service "by default"
+  systemd:
+    name: osiraa
+    scope: user
+    enabled: yes
+    daemon_reload: yes
+
+- name: restart osiraa if there were changes
+  systemd:
+    name: osiraa
+    scope: user
+    state: restarted
+  when: osiraa_service_file.changed or copy_osiraa.changed
+
+- name: wait for osiraa ports to come up
+  wait_for:
+    port: '{{item}}'
+  with_items:
+    - 8000
