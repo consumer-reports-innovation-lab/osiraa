@@ -1,20 +1,25 @@
-# OSIRAA - Open Source Implementer's Reference Authorized Agent
+# OSIRAA - Open Source Implementers’ Reference Authorized Agent
 
 Version 0.5.0 - Updated October 2022
 
 ## How to Use this App:
-OSIRAA (Open Source Implementer's Reference Authorized Agent) is test suite designed to simulate the role of an Authorized Agent in a Digital Rights Protocol (DRP) environment.    The application tests for the availability, correctness and completeness of API endpoints of a Privacy Infrastructure Provider (PIP) or Covered Business (CB) partner application.  See <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a> for more info on DRP system roles and API specification.
+OSIRAA (Open Source Implementers’ Reference Authorized Agent) is a test suite designed to simulate the role of an Authorized Agent in a Data Rights Protocol (DRP) environment.    The application tests for the availability, correctness and completeness of API endpoints of a Privacy Infrastructure Provider (PIP) or Covered Business (CB) partner application.  See <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a> for more info on DRP system roles and API specification.
 
 ## Admin Tool
-A user may model a PIP or Covered Business in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser in the usual way before you can administer data configurations.  For version 0.5, a covered business requires a Discovery Endpoint, Api Secret and Auth Bearer Token, to be supplied by the PIP/CB parter.
+A user may model a Privacy Infrastructure Provider (PIP) or Covered Business (CB) in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser before you can administer data configurations.  For version 0.5, a Covered Business requires a Discovery Endpoint, API Secret and Auth Bearer Token, to be supplied by the PIP/CB partner.
 
 ## Cert Tests Definitions
-The Digital Rights Protocol is centered on a set of API calls between an Authorized Agent and a PIP or Covered Business, on behalf of a User exercising his or her digital rights.
+The Data Rights Protocol is centered on a set of API calls between an Authorized Agent (AA) and a Privacy Infrastructure Provider or Covered Business, on behalf of a User exercising his or her data rights.
 
-## Run Tests Against a PIP or Covered Business API Endpoint
-First select a PIP or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  Discover, Exercise and Status.  Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool. 
+## Test Against a PIP or Covered Business API Endpoint
+First select a Privacy Infrastructure Provider or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  
+  - GET /.well-known/data-rights.json
+  - POST /exercise
+  - GET /status
 
-Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the the response is valid json, it test for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.
+Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool. 
+
+Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the response is valid json, it tests for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.
 
 
 ## Versions
@@ -22,14 +27,26 @@ Once the call is made, the app presents an analysis of the response. It shows th
   - Django 3.2.7
 
 
-## Develop locally
+## Running OSIRAA
+OSIRAA can be run in two ways: locally, or in a docker container. You should choose one or the other; attempting to run the app both ways may cause conflicts.
+Running locally is better suited to the situation where you want to make changes to the source code and see them deployed without having to rebuild the app. 
+Running in a docker container is better for when you wish to deploy the app and configure it to test against your own local or dev endpoints for end-to-end testing.
 
-Clone repo:
+
+## Local Development
+
+Make sure you have Python 3.9.6 installed.
+
+(TODO: note for mac users about multiple python versions ... )
+
+Clone the repo:
 
 ```
 git clone https://github.com/consumer-reports-digital-lab/drp-authorized-agent.git drp-aa-mvp
 cd drp-aa-mvp
 ```
+
+Note: some recent versions macOS have python 2.7 already installed. You'll need to install python3 seperately. In order to to execute commands against the correct python version, use python3 instead of python in the commands listed below.
 
 Create and activate local python environment:
 
@@ -51,7 +68,7 @@ pip install -r requirements.txt
 ```
 
 
-Install and set up postgres (latest version 14).  Note: there are serveral ways to do this.  One is via homebrew, which installs a basic set of tools including a CLU.  A more complete install is available at:  https://www.postgresql.org/download/macosx/.  This included a GUI admin tool that may be easier to use.  Once postgres is installed, you must create a default super user password, etc.
+Install and set up postgres (latest version 14).  There are several ways to do this.  One is via homebrew, which installs a basic set of tools including a CLU.  A more complete install is available at:  https://www.postgresql.org/download/macosx/.  This included a GUI admin tool that may be easier to use.  Once postgres is installed, you must create a default super user password, etc.
 
 Create database:  Using PGAdmin select Object -> Create -> Database and name it `authorizedagent`. Alternatively, in the postgres CLI tool say:
 
@@ -83,9 +100,6 @@ See the app in the browser:
 
 ## Run in `docker`
 
-NOTE:  Running the app in docker may cause conflicts with running locally as per the instructions above.  You should choose one or the other.  Running locally is better suited to the situation where you want to make changes to the source code and want to see them deployed without having to rebuild the app.  Running in a docker container is better for when you wish to deploy the app and configure it to test against you own local or dev DRP PIP endpoints for end-to-end testing.
-
-
 "Simply" install [docker-compose](https://docs.docker.com/compose/) run these commands:
 
 ```
@@ -100,5 +114,8 @@ This will:
 - prompt you to create a Django "super user" which can access the Django admin console
 
 The django admin console should be running http://localhost:8000/admin .
+
+## Contact
+If you encounter development issues or want more information, you can reach the Data Rights Protocol team via email at datarightsprotocol@cr.consumer.org.
 
 
