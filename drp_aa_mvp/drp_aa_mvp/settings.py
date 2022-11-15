@@ -33,7 +33,7 @@ SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', 'drp-authorized-agent.herokuapp.com', '44.209.94.186']
+ALLOWED_HOSTS = ['localhost', 'drp-authorized-agent.herokuapp.com', '44.209.94.186', 'osiraa.datarightsprotocol.org']
 
 
 # Application definition
