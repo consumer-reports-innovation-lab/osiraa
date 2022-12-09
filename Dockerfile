@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3.10
 COPY drp_aa_mvp/requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 COPY docker-entrypoint.sh /entrypoint.sh
