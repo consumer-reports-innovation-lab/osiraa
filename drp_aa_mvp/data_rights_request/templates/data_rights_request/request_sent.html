@@ -3,6 +3,7 @@
 <br/>
 <h3>DRP Data Privacy Request Sent</h3>
 
+<p><span style="display: inline-block; width: 160px;"><b>Covered Business:</b></span> {{covered_biz.name}}</p>
 <p><span style="display: inline-block; width: 160px;"><b>Request Url:</b></span> {{request_url}}</p>
 <p><span style="display: inline-block; width: 160px;"><b>Response Code:</b></span> {{response_code}}</p>
 <br/>
@@ -21,6 +22,7 @@
 
 <form action="data_rights_request_sent_return" method="POST" >
     {% csrf_token %}
+    <input type="hidden" name="sel_covered_biz_id" value={{covered_biz.id}}>
     <input type="submit" value="Okay">
 </form>
 <br/>

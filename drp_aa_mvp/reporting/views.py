@@ -16,9 +16,11 @@ def index(request):
 #-------------------------------------------------------------------------------------------------#
 # test_discovery_endpoint
 
-def test_discovery_endpoint_valid(request_url, response):
-    # todo: check if url is correct; need a better test ... ?
-    return response.status_code == 200  # and request_url.contains('/.well-known/data-rights.json')
+def test_is_discovery_endpoint_valid_url(request_url, response):
+    return response.status_code == 200
+
+def test_is_discovery_endpoint_compliant_url(request_url):
+    return '/.well-known/data-rights.json' in request_url
 
 def test_is_valid_json(response):
     try:
@@ -106,9 +108,13 @@ def test_discovery_endpoint(request_url, response):
         - Discovery Endpoint SHOULD NOT contain additional undefined fields
     """
 
-    # test Covered Business's domain SHOULD have a /.well-known/data-rights.json
-    is_valid_endpoint = test_discovery_endpoint_valid(request_url, response)
+    # test Covered Business's domain SHOULD have a discovery endpoint
+    is_valid_endpoint = test_is_discovery_endpoint_valid_url(request_url, response)
     test_results.append({'name': 'Is valid enpoint', 'result': is_valid_endpoint})
+
+    # test Covered Business's domain a discovery endpoint SHOULD be /.well-known/data-rights.json
+    is_compliant_endpoint = test_is_discovery_endpoint_compliant_url(request_url)
+    test_results.append({'name': 'Is compliant enpoint', 'result': is_compliant_endpoint})
 
     # test Discovery Endpoint MUST be valid JSON
     is_valid_json = test_is_valid_json(response)
@@ -385,7 +391,7 @@ def test_excercise_endpoint(request_json, response):
         - Data Rights Status object MUST contain field “request_id”
             - String which is unique within the scope of the AA:CB relationship
         - Data Rights Status object MUST contain field “received_at”
-            - “received_at” is an RFC3339 string (ISO time format)
+            - “received_at” is an ISO 8601 string (ISO time format)
         - Data Rights Status object MUST contain “status” field
             - “status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]
             - allowable status varies with action; see below
@@ -393,7 +399,7 @@ def test_excercise_endpoint(request_json, response):
             - “reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”
             - allowable reason varies with status; see below
         - Data Rights Status object MAY contain “expected_by” field
-            - “expected_by” is an RFC3339 string (ISO time format)
+            - “expected_by” is an ISO 8601 string (ISO time format)
         - Data Rights Status object MAY contain 'processing_details' field
             - TBD: any contstraint on this ... ?
         - Data Rights Status object MAY contain 'user_verification_url' field
@@ -461,7 +467,7 @@ def test_excercise_endpoint(request_json, response):
     contains_received_at = test_contains_received_at(response)
     test_results.append({'name': 'Contains field received_at', 'result': contains_received_at})
 
-    # test “received_at” is an RFC3339 string (ISO time format)
+    # test “received_at” is an ISO 8601 string (ISO time format)
     is_received_at_time_format = test_is_received_at_time_format(response)
     test_results.append({'name': 'Is received_at ISO time format', 'result': is_received_at_time_format})
 
@@ -481,7 +487,7 @@ def test_excercise_endpoint(request_json, response):
     is_reason_valid = test_is_reason_valid(response)
     test_results.append({'name': 'Is reason valid', 'result': is_reason_valid})
 
-    # test Data Rights Status object MAY contain “expected_by” field; “expected_by” is an RFC3339 string (ISO time format)
+    # test Data Rights Status object MAY contain “expected_by” field; “expected_by” is an ISO 8601 string (ISO time format)
     has_expected_by_iso_time_format = test_has_expected_by_iso_time_format(response)
     test_results.append({'name': 'Has expected_by as ISO time format', 'result': has_expected_by_iso_time_format})
 
@@ -593,7 +599,7 @@ def test_status_endpoint(request_url, response):
         - Data Rights Status object MUST contain field “request_id”
             - request_id value should match the value passed in from request
         - Data Rights Status object MUST contain field “received_at”
-            - “received_at” is an RFC3339 string (ISO time format)
+            - “received_at” is an ISO 8601 string (ISO time format)
         - Data Rights Status object MUST contain “status” field
             - “status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]
             - allowable status varies with action; see below
@@ -632,7 +638,7 @@ def test_status_endpoint(request_url, response):
     contains_received_at = test_contains_received_at(response)
     test_results.append({'name': 'Contains field received_at', 'result': contains_received_at})
 
-    # test “received_at” is an RFC3339 string (ISO time format)
+    # test “received_at” is an ISO 8601 string (ISO time format)
     is_received_at_time_format = test_is_received_at_time_format(response)
     test_results.append({'name': 'Is received_at ISO time format', 'result': is_received_at_time_format})
 
