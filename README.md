@@ -55,18 +55,12 @@ python -m venv env
 . ./env/bin/activate
 ```
 
-Create requirements.txt if it does not already exist
-
-```
-pip freeze > requirements.txt
-```
-
 Install requirements:  
 
 ```
+cd drp_aa_mvp
 pip install -r requirements.txt
 ```
-
 
 Install and set up postgres (latest version 14).  There are several ways to do this.  One is via homebrew, which installs a basic set of tools including a CLU.  A more complete install is available at:  https://www.postgresql.org/download/macosx/.  This included a GUI admin tool that may be easier to use.  Once postgres is installed, you must create a default super user password, etc.
 

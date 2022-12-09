@@ -5,6 +5,7 @@ from django.shortcuts import render
 import requests
 import json
 import jwt
+import validators
 
 from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
 from user_identity.models import IdentityUser
@@ -51,27 +52,29 @@ def select_covered_business(request):
 def send_request_discover_data_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
-    request_url     = covered_biz.discovery_endpoint + ".well-known/data-rights.json"
+    request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
 
-    # todo: handle response error ...
-    response = get_well_known(request_url)   
+    if (validators.url(request_url)):
+        response = get_well_known(request_url)   
+        set_covered_biz_well_known_params(covered_biz, response)
+        discover_test_results = test_discovery_endpoint(request_url, response)
 
-    # run DRP cerification tests
-    discover_test_results = test_discovery_endpoint(request_url, response)
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      request_url, 
+            'response_code':    response.status_code,
+            'response_payload': response.text,
+            'test_results':     discover_test_results,
+        }
 
-    # set api_root and supported_actions for covered_biz
-    reponse_json = response.json()
-    covered_biz.api_root = reponse_json['api_base']
-    covered_biz.supported_actions = reponse_json['actions']
-    covered_biz.save()
-
-    # go to results page
-    request_sent_context = { 
-        'request_url':      request_url, 
-        'response_code':    response.status_code,
-        'response_payload': response.text,
-        'test_results':     discover_test_results
-    }
+    else:  
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      request_url, 
+            'response_code':    'invalid url for /discover, no response',
+            'response_payload': '',
+            'test_results':     [],
+        }
 
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
@@ -85,28 +88,55 @@ def send_request_excercise_rights(request):
     covered_regime  = request.POST.get('covered_regime')
     request_url     = covered_biz.api_root_endpoint + "/exercise"
     bearer_token    = covered_biz.auth_bearer_token
+
+    # todo: a missing param in the request_json could cause trouble ...
+    #print('**  send_request_excercise_rights(): request_action = ' + request_action)
+
     request_json    = create_excercise_request_json(user_identity, covered_biz, 
                                                     request_action, covered_regime)
 
-    # todo: handle success/error ...
-    response = post_exercise_rights(request_url, bearer_token, request_json)
+    if (validators.url(request_url)):
+        response = post_exercise_rights(request_url, bearer_token, request_json)
 
-    # run DRP cerification tests
-    excercise_test_results = test_excercise_endpoint(request_json, response)
+        try:
+            json.loads(response.text)
+        except ValueError as e:
+            request_sent_context = { 
+                'covered_biz':      covered_biz,
+                'request_url':      request_url, 
+                'response_code':    response.status_code,
+                'response_payload': 'invalid json in response for /excecise',
+                'test_results':     [],
+            }
 
-    # create a new DRP transaction
-    response_json = response.json()
-    data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,  covered_biz, request_json, response_json)
+            return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
-    # go to results page
-    context = { 
-        'request_url': request_url, 
-        'response_code': response.status_code,
-        'response_payload': response.text,
-        'test_results': excercise_test_results 
-    }
+        response_json = response.json()
 
-    return render(request, 'data_rights_request/request_sent.html', context)
+        if ('request_id' in response_json):
+            data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,  
+                                                            covered_biz, request_json, response_json)
+        
+        excercise_test_results = test_excercise_endpoint(request_json, response)
+
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url': request_url, 
+            'response_code': response.status_code,
+            'response_payload': response.text,
+            'test_results': excercise_test_results 
+        }
+
+    else:
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      request_url, 
+            'response_code':    'invalid url for /excecise , no response',
+            'response_payload': '',
+            'test_results':     [],
+        }
+
+    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
 
 def send_request_get_status(request):
@@ -116,25 +146,35 @@ def send_request_get_status(request):
     user_identity   = IdentityUser.objects.get(pk=user_id_id)
     request_url     = covered_biz.api_root_endpoint + "/status"
     bearer_token    = covered_biz.auth_bearer_token
+
+    # todo: might not find a request id, handle this ...
     request_id      = get_request_id (covered_biz, user_identity)
 
-    # todo: handle success/failure ...
-    response        = get_status(request_url, bearer_token, request_id)
+    if (validators.url(request_url)):
+        response = get_status(request_url, bearer_token, request_id)
 
-    # run DRP cerification tests ...
-    status_test_results = test_status_endpoint(request_url, response)
+        # todo: log request to DB, setup status ping ...
 
-    # todo: log request to DB, setup status ping ...
+        status_test_results = test_status_endpoint(request_url, response)
 
-    # go to results page ...
-    context = { 
-        'request_url': response.request.url, 
-        'response_code': response.status_code,
-        'response_payload': response.text,
-        'test_results': status_test_results 
-    }
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url': response.request.url, 
+            'response_code': response.status_code,
+            'response_payload': response.text,
+            'test_results': status_test_results 
+        }
 
-    return render(request, 'data_rights_request/request_sent.html', context)
+    else:
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      request_url, 
+            'response_code':    'invalid url for /status , no response',
+            'response_payload': '',
+            'test_results':     [],
+        }
+
+    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
 
 def send_request_revoke(request):
@@ -148,28 +188,67 @@ def send_request_revoke(request):
     reason          = "I don't want my account deleted."
     reqest_json     = create_revoke_request_json(request_id, reason)
     
-    # todo: handle success/failure ...   
-    response        = post_revoke(request_url, bearer_token, reqest_json)
+    if (validators.url(request_url)):  
+        response = post_revoke(request_url, bearer_token, reqest_json)
 
-    # todo: run DRP cerification tests ...
-    
-    # todo: log request to DB, stop status ping ...
+        # todo: log request to DB, stop status ping ...
 
-    # go to results page
-    context = { 
-        'request_url': response.request.url, 
-        'response_code': response.status_code,
-        'response_payload': response.text  
-    }
+        # todo: run DRP cerification tests ...
+        
+        context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      response.request.url, 
+            'response_code':    response.status_code,
+            'response_payload': response.text,
+            'test_results':     [],
+        }
 
-    return render(request, 'data_rights_request/request_sent.html', context)
+    else:
+        request_sent_context = { 
+            'covered_biz':      covered_biz,
+            'request_url':      request_url, 
+            'response_code':    'invalid url for /revoke , no response',
+            'response_payload': '',
+            'test_results':     [],
+        }
+
+    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
 
 def data_rights_request_sent_return(request):
-    return HttpResponseRedirect('make_request') 
+    user_identities             = IdentityUser.objects.all()
+    covered_businesses          = CoveredBusiness.objects.all()
+    covered_biz_id              = request.POST.get('sel_covered_biz_id')
+    selected_covered_biz        = CoveredBusiness.objects.get(pk=covered_biz_id)
+    covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
+    request_actions             = get_request_actions_form_display(selected_covered_biz)
+
+    context = { 
+        'user_identities':      user_identities, 
+        'covered_businesses':   covered_biz_form_display, 
+        'selected_covered_biz': selected_covered_biz,
+        'request_actions':      request_actions
+    }
+
+    return render(request, 'data_rights_request/index.html', context)
 
 
 #-------------------------------------------------------------------------------------------------#
+
+def set_covered_biz_well_known_params(covered_biz, response):
+
+    # set api_root and supported_actions for covered_biz
+    try:
+        json.loads(response.text)
+    except ValueError as e:
+        print('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
+        return False  
+          
+    reponse_json = response.json()
+    covered_biz.api_root = reponse_json['api_base']
+    covered_biz.supported_actions = reponse_json['actions']
+    covered_biz.save()
+
 
 def get_covered_biz_form_display(covered_businesses, selected_biz):
     if selected_biz == None:
@@ -334,8 +413,11 @@ def create_drp_request_transaction(user_identity, covered_biz, reqest_json, resp
 
 
 def get_request_id (covered_biz, user_identity):
-    #todo: get the most recent one ...
+
+    # todo: get the most recent one ...
     data_rights_transaction = DrpRequestTransaction.objects.filter(user_ref=user_identity.id).filter(company_ref=covered_biz.id)[0] #.latest()
+
+    # todo: might not get a result, which could cause trouble down the line, so handle that situation ...
 
     request_id = data_rights_transaction.request_id
 
@@ -346,10 +428,8 @@ def get_request_id (covered_biz, user_identity):
 #-------------------------------------------------------------------------------------------------#
 
 #GET /.well-known/data-rights.json
-def get_well_known(discovery_endpoint):
-    well_known_url = discovery_endpoint  # "https://zingmanstudios.com/clients/crdl/drp/.well-known/data-rights.json"
-
-    response = requests.get(well_known_url)
+def get_well_known(discovery_url):
+    response = requests.get(discovery_url)
 
     """
     {
@@ -398,7 +478,6 @@ def get_status(request_url, bearer_token, request_id):
 
 
 def post_revoke(request_url, bearer_token, request_json):
-
     request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
     response = requests.post(request_url, json=request_json, headers=request_headers)
