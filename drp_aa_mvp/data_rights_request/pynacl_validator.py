@@ -3,7 +3,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from nacl.encoding import Base64Encoder
 from nacl.signing import VerifyKey
-import nacl.exceptions 
+import nacl.exceptions
 import json
 from datetime import datetime
 
@@ -39,7 +39,7 @@ def validate_pynacl(request):
       context["valid"] = False
       context["reasons"] += [f"BadSignatureError raised"]
       return render(request, 'data_rights_request/validate_pynacl.html', context)
-        
+
     verified_dict = dict()
     try:
       verified_dict = json.loads(verified_obj)
@@ -102,4 +102,3 @@ def validate_inner_dict(obj: dict, context: dict):
             context["reasons"] += [f"{field} is missing in object"]
 
     return context
-    
