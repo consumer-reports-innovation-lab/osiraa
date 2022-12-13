@@ -452,7 +452,7 @@ def post_exercise_rights(request_url, bearer_token, request_json):
     -H 'Authorization: Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..Y2pZOkoc445kyqOZAKGjzw.-scnX7wxH2MeTohuCPPThCUFp7qUoyRA2hJlOsSUix6RmYRT2uz2sPUZnT-07-jYz3-32G07aIEyk30JeoHHsg3SMUa7V8Y2OlBI0WMaZ3QUscEuVZa7s3RuVVfvtePD195MMmH5w3RQkgxMrP8Lj8KubiYnRYw2n_rVt0crtP75s0NSnIF2ThWCAiq5gaGAdYSjzHwMWi9OAZekEuxNmFaTa2tu_j9Hi8uLbvjsp9-z5IjmGGsiTPNbPj5JgCWOxy-E-Ub6KMWMcCIxoLAki_Qfo5d1JwffvDQsEJT4zefm3HSdpFphv579KpgStLVhIh4r_5OnLl-w-ueHfDO3iCMgw8KIw7p5GtiXWggCejhJCohcM_g2msfG9OFeMd-7vLiFUuk4d4dzIbXXdOHGcv-lL3EyQUnRzQRXVGV3wHnxvN3Xyli4YQUqCk_qkJ1yf8LSJejqTklaCwovwuMWEu6ZwrXVq9OorMphHtnoRW-Ngw4oYa8SIME0YF3vdchCaglbNDhMVVjFkUkKsNBHfqUiZWLyXlNCluhQpMKORW5Uqk0mLtgLX_U5BlkibjcR9440UZvZoT_LBpiT21nLLtCdidHfW7bEgH9-bBMtoEwBeBM_RmxT1ysRKrdJ0NZCZgyU3FMijV-XFmIt2aZDaD2fnDJDBP1q0Aw1tVfucESZJHKUQtVKp6Q.EMaYOKnSqk2ApwP-uss3CA'
     """
 
-    request_headers = {'Authorization': "Bearer {bearer_token}"}
+    request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
     response = requests.post(request_url, json=request_json, headers=request_headers)
 
