@@ -53,11 +53,16 @@ def send_request_discover_data_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
+    bearer_token    = covered_biz.auth_bearer_token or ""
 
     if (validators.url(request_url)):
-        response = get_well_known(request_url)   
+        unauthed_response = get_well_known(request_url)
+        response = get_well_known(request_url, bearer_token)
         set_covered_biz_well_known_params(covered_biz, response)
-        discover_test_results = test_discovery_endpoint(request_url, response)
+        discover_test_results = test_discovery_endpoint(request_url, {
+            'unauthed': unauthed_response,
+            'authed': response
+        })
 
         request_sent_context = { 
             'covered_biz':      covered_biz,
@@ -428,8 +433,12 @@ def get_request_id (covered_biz, user_identity):
 #-------------------------------------------------------------------------------------------------#
 
 #GET /.well-known/data-rights.json
-def get_well_known(discovery_url):
-    response = requests.get(discovery_url)
+def get_well_known(discovery_url, bearer_token=""):
+    if bearer_token != "":
+        request_headers = {'Authorization': f"Bearer {bearer_token}"}
+        response = requests.get(discovery_url, headers=request_headers)
+    else:
+        response = requests.get(discovery_url)
 
     """
     {
