@@ -36,7 +36,7 @@ def test_contains_version_field(response):
         return False 
     return 'version' in response_json and response_json['version'] == '0.5'  
 
-def test_contians_api_base(response):
+def test_contains_api_base(response):
     try:
         response_json = json.loads(response.text)
     except ValueError as e:
@@ -91,9 +91,7 @@ def test_discovery_contains_no_unknown_fields(response):
     return True
 
 
-def test_discovery_endpoint(request_url, response):
-    test_results = []
-
+def test_discovery_endpoint(request_url, responses):
     """
     1.  GET .well-known/data-rights.json
         - Covered Business's domain SHOULD have a /.well-known/data-rights.json
@@ -107,6 +105,21 @@ def test_discovery_endpoint(request_url, response):
         - Discovery Endpoint MAY contain a user_relationships hint set
         - Discovery Endpoint SHOULD NOT contain additional undefined fields
     """
+    test_results = []
+
+    # unauthed response SHOULD be a 200 response code
+    unauthed = responses['unauthed']
+    authed = responses['authed']
+
+    is_endpoint_auth_not_required = unauthed.status_code == 200
+    test_results.append({'name': 'Endpoint auth is not required', 'result': is_endpoint_auth_not_required})
+
+    if is_endpoint_auth_not_required:
+        # request sent without authorization headers
+        response = unauthed
+    else:
+        # request sent with authorization headers
+        response = authed
 
     # test Covered Business's domain SHOULD have a discovery endpoint
     is_valid_endpoint = test_is_discovery_endpoint_valid_url(request_url, response)
@@ -125,8 +138,8 @@ def test_discovery_endpoint(request_url, response):
     test_results.append({'name': 'Contains version field', 'result': contains_version_field})
 
     # test Discovery Endpoint MUST provide an API base
-    contians_api_base = test_contians_api_base(response)
-    test_results.append({'name': 'Contains API Base', 'result': contians_api_base})
+    contains_api_base = test_contains_api_base(response)
+    test_results.append({'name': 'Contains API Base', 'result': contains_api_base})
 
     # test API base MUST be valid for subsequent calls
     is_valid_api_base = test_is_valid_api_base(response)
