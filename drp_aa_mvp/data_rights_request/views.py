@@ -249,10 +249,14 @@ def set_covered_biz_well_known_params(covered_biz, response):
         print('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
         return False  
           
-    reponse_json = response.json()
-    covered_biz.api_root = reponse_json['api_base']
-    covered_biz.supported_actions = reponse_json['actions']
-    covered_biz.save()
+    try:
+        reponse_json = response.json()
+        covered_biz.api_root = reponse_json['api_base']
+        covered_biz.supported_actions = reponse_json['actions']
+        covered_biz.save()
+    except KeyError as e:
+        print('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
+        return False
 
 
 def get_covered_biz_form_display(covered_businesses, selected_biz):
