@@ -14,8 +14,18 @@ VERIFY_KEY_HEADER = "X-DRP-VerifyKey"
 @csrf_exempt
 def validate_pynacl(request):
     '''Validate an application/octet-stream request containing the
-    libsodium signed token with the verify key stuffed in to a header,
+    NaCL signed token with the verify key stuffed in to a header,
     base64 encoded.
+
+    This method DOES NOT do a validation sufficient enough to be a
+    drop-in validator for DRP Data Rights Requests and only exists to
+    exhibit the cryptographic signing/verifying flows via PyNaCl. Keys
+    SHOULD NOT be sent in-band in this method as no real trust root is
+    established.
+
+    As the DRP public key directories are designed this code will be
+    iterated upon as a test-bed for this network operating model.
+
     '''
 
     context = dict(valid=True,
