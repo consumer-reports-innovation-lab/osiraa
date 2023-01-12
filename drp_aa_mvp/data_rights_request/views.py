@@ -328,7 +328,6 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         # 3
         # claims in IANA JSON Web Token Claims page
         # see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
-        "sub": user_identity.email,                 # identifier at the issuer, e.g. id of the user ...
         "name": (user_identity.last_name + ", " + user_identity.first_name),     
         "email": user_identity.email,      
         "phone_number": user_identity.phone_number,
