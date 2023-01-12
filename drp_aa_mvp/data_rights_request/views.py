@@ -306,11 +306,10 @@ def get_request_actions_form_display (covered_biz):
 
 
 def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-
     issued_time     = datetime.datetime.now()
     expires_time    = issued_time + datetime.timedelta(days=45)
 
-    # New for 0.6 - A Data Rights Exercise request SHALL contain a JWT-encoded message body containing the following fields:
+    # 0.6 - A Data Rights Exercise request SHALL contain a JWT-encoded message body containing the following fields:
     request_json = {
         # 1
         "iss": auth_agent_drp_id,
@@ -328,10 +327,13 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         
         # 3
         # claims in IANA JSON Web Token Claims page
-        # https://www.iana.org/assignments/jwt/jwt.xhtml#claims
+        # see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+        "sub": user_identity.email,                 # identifier at the issuer, e.g. id of the user ...
+        "name": (user_identity.last_name + ", " + user_identity.first_name),     
+        "email": user_identity.email,      
+        "phone_number": user_identity.phone_number,
+        "address": user_identity.address1,
     }
-
-    # todo: - where does identity payload fit into the new scheme ... ?
 
     # Old (0.5)
     """
