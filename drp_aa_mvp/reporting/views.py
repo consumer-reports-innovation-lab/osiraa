@@ -34,7 +34,7 @@ def test_contains_version_field(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    return 'version' in response_json and response_json['version'] == '0.5'  
+    return 'version' in response_json and response_json['version'] == '0.6'  
 
 def test_contians_api_base(response):
     try:
@@ -98,7 +98,7 @@ def test_discovery_endpoint(request_url, response):
     1.  GET .well-known/data-rights.json
         - Covered Business's domain SHOULD have a /.well-known/data-rights.json
         - Discovery Endpoint MUST be valid JSON
-        - Discovery Endpoint MUST contain a version field (currently 0.5)
+        - Discovery Endpoint MUST contain a version field (currently 0.6)
         - Discovery Endpoint MUST provide an API base
             - API base MUST be valid for subsequent calls
         - Discovery Endpoint MUST provide a list of supported actions
@@ -120,7 +120,7 @@ def test_discovery_endpoint(request_url, response):
     is_valid_json = test_is_valid_json(response)
     test_results.append({'name': 'Is valid json', 'result': is_valid_json})
 
-    # test Discovery Endpoint MUST contain a version field (currently 0.5)
+    # test Discovery Endpoint MUST contain a version field (currently 0.6)
     contains_version_field = test_contains_version_field(response)
     test_results.append({'name': 'Contains version field', 'result': contains_version_field})
 

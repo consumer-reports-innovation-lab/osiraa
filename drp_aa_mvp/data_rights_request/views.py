@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -13,6 +14,7 @@ from covered_business.models import CoveredBusiness
 from reporting.views import test_discovery_endpoint, test_excercise_endpoint, test_status_endpoint
 
 
+auth_agent_drp_id   = 'CR_AA_DRP_ID_001'
 selected_covered_biz: CoveredBusiness = None
 
 
@@ -86,17 +88,19 @@ def send_request_excercise_rights(request):
     user_identity   = IdentityUser.objects.get(pk=user_id_id)
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
-    request_url     = covered_biz.api_root_endpoint + "/exercise"
+
+    request_url     = covered_biz.api_root_endpoint + f"/exercise?kid={auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token
 
-    # todo: a missing param in the request_json could cause trouble ...
+    # todo: a missing param in the request_jwt could cause trouble ...
     #print('**  send_request_excercise_rights(): request_action = ' + request_action)
 
     request_json    = create_excercise_request_json(user_identity, covered_biz, 
                                                     request_action, covered_regime)
+    request_jwt     = create_jwt(request_json)
 
     if (validators.url(request_url)):
-        response = post_exercise_rights(request_url, bearer_token, request_json)
+        response = post_exercise_rights(request_url, bearer_token, request_jwt)
 
         try:
             json.loads(response.text)
@@ -121,10 +125,10 @@ def send_request_excercise_rights(request):
 
         request_sent_context = { 
             'covered_biz':      covered_biz,
-            'request_url': request_url, 
-            'response_code': response.status_code,
+            'request_url':      request_url, 
+            'response_code':    response.status_code,
             'response_payload': response.text,
-            'test_results': excercise_test_results 
+            'test_results':     excercise_test_results 
         }
 
     else:
@@ -302,6 +306,35 @@ def get_request_actions_form_display (covered_biz):
 
 
 def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
+
+    issued_time     = datetime.datetime.now()
+    expires_time    = issued_time + datetime.timedelta(days=45)
+
+    # New for 0.6 - A Data Rights Exercise request SHALL contain a JWT-encoded message body containing the following fields:
+    request_json = {
+        # 1
+        "iss": auth_agent_drp_id,
+        "aud": covered_biz.cb_id,
+        "exp": expires_time,
+        "iat": issued_time,
+
+        # 2
+        "drp.version": "0.6",
+        "exercise": request_action,
+        "regime": covered_regime,
+        "relationships": [ ],
+        # callbackk url for the AA that the CB can hit to provide status updates, NYI
+        "status_callback": "https://dsr-agent.example.com/update_status",           
+        
+        # 3
+        # claims in IANA JSON Web Token Claims page
+        # https://www.iana.org/assignments/jwt/jwt.xhtml#claims
+    }
+
+    # todo: - where does identity payload fit into the new scheme ... ?
+
+    # Old (0.5)
+    """
     jwt = create_jwt(user_identity, covered_biz)
 
     request_json = {
@@ -316,6 +349,7 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         "identity": jwt,
         "status_callback": "https://dsr-agent.example.com/update_status"
     }
+    """
 
     return request_json
 
@@ -332,6 +366,8 @@ def create_jwt(user_identity, covered_biz):
     )
 
 
+# for 0.5, now depricated ...
+"""
 def create_id_payload (user_identity, covered_biz):
     id_payload = {
         "iss": "https://consumerreports.com/",  # will match an entry in DB of trusted partners ...
@@ -344,7 +380,7 @@ def create_id_payload (user_identity, covered_biz):
     }
 
     return id_payload
-
+"""
 
 def create_revoke_request_json(request_id, reason):
     request_json = {
@@ -433,7 +469,7 @@ def get_well_known(discovery_url):
 
     """
     {
-    "version": "0.5",
+    "version": "0.6",
     "api_base": "https://example.com/data-rights",
     "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
     "user_relationships": [ ]
@@ -444,17 +480,20 @@ def get_well_known(discovery_url):
 
 
 #POST /exercise
-def post_exercise_rights(request_url, bearer_token, request_json):
+def post_exercise_rights(request_url, bearer_token, request_jwt):
+
+    # Now for 0.6: POST /exercise?kid={aa-id}
+
     """
     curl -X 'POST' 
     'http://localhost:8080/api/v1/drp/excercise'
-    -H 'accept: application/json'
+    -H 'accept: application/jwt'
     -H 'Authorization: Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..Y2pZOkoc445kyqOZAKGjzw.-scnX7wxH2MeTohuCPPThCUFp7qUoyRA2hJlOsSUix6RmYRT2uz2sPUZnT-07-jYz3-32G07aIEyk30JeoHHsg3SMUa7V8Y2OlBI0WMaZ3QUscEuVZa7s3RuVVfvtePD195MMmH5w3RQkgxMrP8Lj8KubiYnRYw2n_rVt0crtP75s0NSnIF2ThWCAiq5gaGAdYSjzHwMWi9OAZekEuxNmFaTa2tu_j9Hi8uLbvjsp9-z5IjmGGsiTPNbPj5JgCWOxy-E-Ub6KMWMcCIxoLAki_Qfo5d1JwffvDQsEJT4zefm3HSdpFphv579KpgStLVhIh4r_5OnLl-w-ueHfDO3iCMgw8KIw7p5GtiXWggCejhJCohcM_g2msfG9OFeMd-7vLiFUuk4d4dzIbXXdOHGcv-lL3EyQUnRzQRXVGV3wHnxvN3Xyli4YQUqCk_qkJ1yf8LSJejqTklaCwovwuMWEu6ZwrXVq9OorMphHtnoRW-Ngw4oYa8SIME0YF3vdchCaglbNDhMVVjFkUkKsNBHfqUiZWLyXlNCluhQpMKORW5Uqk0mLtgLX_U5BlkibjcR9440UZvZoT_LBpiT21nLLtCdidHfW7bEgH9-bBMtoEwBeBM_RmxT1ysRKrdJ0NZCZgyU3FMijV-XFmIt2aZDaD2fnDJDBP1q0Aw1tVfucESZJHKUQtVKp6Q.EMaYOKnSqk2ApwP-uss3CA'
     """
 
     request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
-    response = requests.post(request_url, json=request_json, headers=request_headers)
+    response = requests.post(request_url, headers=request_headers, json=request_jwt)
 
     return response
 
@@ -464,7 +503,7 @@ def get_status(request_url, bearer_token, request_id):
     """
     curl -X 'GET' 
     'http://localhost:8080/api/v1/drp/status'
-    -H 'accept: application/json'
+    -H 'accept: application/jwt'
     -H 'Authorization: Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..Y2pZOkoc445kyqOZAKGjzw.-scnX7wxH2MeTohuCPPThCUFp7qUoyRA2hJlOsSUix6RmYRT2uz2sPUZnT-07-jYz3-32G07aIEyk30JeoHHsg3SMUa7V8Y2OlBI0WMaZ3QUscEuVZa7s3RuVVfvtePD195MMmH5w3RQkgxMrP8Lj8KubiYnRYw2n_rVt0crtP75s0NSnIF2ThWCAiq5gaGAdYSjzHwMWi9OAZekEuxNmFaTa2tu_j9Hi8uLbvjsp9-z5IjmGGsiTPNbPj5JgCWOxy-E-Ub6KMWMcCIxoLAki_Qfo5d1JwffvDQsEJT4zefm3HSdpFphv579KpgStLVhIh4r_5OnLl-w-ueHfDO3iCMgw8KIw7p5GtiXWggCejhJCohcM_g2msfG9OFeMd-7vLiFUuk4d4dzIbXXdOHGcv-lL3EyQUnRzQRXVGV3wHnxvN3Xyli4YQUqCk_qkJ1yf8LSJejqTklaCwovwuMWEu6ZwrXVq9OorMphHtnoRW-Ngw4oYa8SIME0YF3vdchCaglbNDhMVVjFkUkKsNBHfqUiZWLyXlNCluhQpMKORW5Uqk0mLtgLX_U5BlkibjcR9440UZvZoT_LBpiT21nLLtCdidHfW7bEgH9-bBMtoEwBeBM_RmxT1ysRKrdJ0NZCZgyU3FMijV-XFmIt2aZDaD2fnDJDBP1q0Aw1tVfucESZJHKUQtVKp6Q.EMaYOKnSqk2ApwP-uss3CA'
     """
 

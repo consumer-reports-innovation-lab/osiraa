@@ -28,6 +28,7 @@ class CoveredBusiness(models.Model):
 
     name                  = models.CharField(max_length=63, blank=True, default='')
     brand_name            = models.CharField(max_length=63, blank=True, default='')
+    cb_id                 = models.CharField(max_length=63, blank=True, default='')
     logo                  = models.ImageField('Logo Image', upload_to='company-logos', blank=True)
     logo_thumbnail        = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
     subtitle_description  = models.TextField(blank=True)
