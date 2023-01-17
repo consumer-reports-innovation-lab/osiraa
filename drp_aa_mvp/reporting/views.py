@@ -90,7 +90,6 @@ def test_discovery_contains_no_unknown_fields(response):
             return False
     return True
 
-
 def test_discovery_endpoint(request_url, response):
     test_results = []
 
@@ -164,7 +163,7 @@ def test_is_data_rights_status_obj(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    # todo: for now we just check for requried fields; is there a better way ... ?    
+    # todo: for now we just check for requried fields; is there a better way, maybe by using types ... ?    
     for field in required_fields:
         if field not in response_json:
             return False
@@ -375,7 +374,6 @@ def test_is_reponse_valid_for_optin_voluntary(response):
     if is_valid_status and response_json['status'] == 'denied':
         return 'reason' in response_json and response_json['reason'] == 'outside_jurisdiction'
     return False 
-
 
 def test_excercise_endpoint(request_json, response):
     test_results = []
@@ -679,3 +677,16 @@ def test_status_endpoint(request_url, response):
         test_results.append({ 'name': 'Response valid for status expired', 'result': is_reponse_valid_for_status_expired })
 
     return test_results
+
+
+#-------------------------------------------------------------------------------------------------#
+# test_status_endpoint
+
+# todo: implement ...
+
+"""
+4.  POST /revoke response
+    - Response MUST adhere to the Exercise Status Schema. 
+    - Response MUST contain the new state.
+"""
+

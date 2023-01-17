@@ -88,7 +88,6 @@ def send_request_excercise_rights(request):
     user_identity   = IdentityUser.objects.get(pk=user_id_id)
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
-
     request_url     = covered_biz.api_root_endpoint + f"/exercise?kid={auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token
 
@@ -149,15 +148,15 @@ def send_request_get_status(request):
     user_id_id      = request.POST.get('user_identity')
     user_identity   = IdentityUser.objects.get(pk=user_id_id)
     request_url     = covered_biz.api_root_endpoint + "/status"
-    bearer_token    = covered_biz.auth_bearer_token
 
-    # todo: might not find a request id, handle this ...
+    # todo: might not find a request id, need to handle this case ...
     request_id      = get_request_id (covered_biz, user_identity)
 
     if (validators.url(request_url)):
-        response = get_status(request_url, bearer_token, request_id)
+        #  Data Rights Status requests SHALL be made without Authorization headers
+        response = get_status(request_url, request_id)
 
-        # todo: log request to DB, setup status ping ...
+        # todo: log request to DB, setup status callback ...
 
         status_test_results = test_status_endpoint(request_url, response)
 
@@ -186,14 +185,16 @@ def send_request_revoke(request):
     cov_biz_id      = request.POST.get('covered_business')
     user_identity   = IdentityUser.objects.get(pk=user_id_id)
     covered_biz     = CoveredBusiness.objects.get(pk=cov_biz_id)
-    request_url     = covered_biz.api_root_endpoint + "/revoke"
+    request_url     = covered_biz.api_root_endpoint + f"/revoke?kid={auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token
     request_id      = "pri_5e9f3775-549b-42ba-8d9f-c94a2e640f50"  #"c789ff35-7644-4ceb-9981-4b35c264aac3"
     reason          = "I don't want my account deleted."
-    reqest_json     = create_revoke_request_json(request_id, reason)
-    
+
+    request_json    = create_revoke_request_json(request_id, reason)
+    request_jwt     = create_jwt(request_json)
+
     if (validators.url(request_url)):  
-        response = post_revoke(request_url, bearer_token, reqest_json)
+        response = post_revoke(request_url, bearer_token, request_jwt)
 
         # todo: log request to DB, stop status ping ...
 
@@ -240,8 +241,6 @@ def data_rights_request_sent_return(request):
 #-------------------------------------------------------------------------------------------------#
 
 def set_covered_biz_well_known_params(covered_biz, response):
-
-    # set api_root and supported_actions for covered_biz
     try:
         json.loads(response.text)
     except ValueError as e:
@@ -269,11 +268,13 @@ def get_covered_biz_form_display(covered_businesses, selected_biz):
 
     return covered_businesses_form_display 
     
+
 def covered_biz_has_supported_action(covered_biz, action):
     if action in covered_biz.supported_actions:
         return ''  # indicates NOT disabled
 
     return 'disabled'
+
 
 def get_request_actions_form_display (covered_biz):
     if (covered_biz is None):  
@@ -322,8 +323,8 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [ ],
-        # callbackk url for the AA that the CB can hit to provide status updates, NYI
-        "status_callback": "https://dsr-agent.example.com/update_status",           
+        # callback url for the AA that the CB can hit to provide status updates, NYI
+        "status_callback": "https://dsr-agent.pslip.com/update_status",           
         
         # 3
         # claims in IANA JSON Web Token Claims page
@@ -333,24 +334,6 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         "phone_number": user_identity.phone_number,
         "address": user_identity.address1,
     }
-
-    # Old (0.5)
-    """
-    jwt = create_jwt(user_identity, covered_biz)
-
-    request_json = {
-        "meta": { 
-            "version": "0.5" 
-        },
-        "regime": covered_regime,
-        "exercise": [
-            request_action
-        ],
-        "relationships": [],
-        "identity": jwt,
-        "status_callback": "https://dsr-agent.example.com/update_status"
-    }
-    """
 
     return request_json
 
@@ -367,22 +350,6 @@ def create_jwt(user_identity, covered_biz):
     )
 
 
-# for 0.5, now depricated ...
-"""
-def create_id_payload (user_identity, covered_biz):
-    id_payload = {
-        "iss": "https://consumerreports.com/",  # will match an entry in DB of trusted partners ...
-        #"aud": covered_biz.name,               # skip for now, not yet supported on PIP side ...
-        "sub": user_identity.email,             # identifier at the issuer, e.g. id of the user ...
-        "name": (user_identity.last_name + ", " + user_identity.first_name),     
-        "email": user_identity.email,      
-        "phone_number": user_identity.phone_number,
-        "address": user_identity.address1
-    }
-
-    return id_payload
-"""
-
 def create_revoke_request_json(request_id, reason):
     request_json = {
         "request_id": request_id,
@@ -394,12 +361,12 @@ def create_revoke_request_json(request_id, reason):
 
 #-------------------------------------------------------------------------------------------------#
 
-def create_drp_request_transaction(user_identity, covered_biz, reqest_json, response_json):
-
+def create_drp_request_transaction(user_identity, covered_biz, request_json, response_json):
     identity_payload = IdentityPayload.objects.create(
-        #issuer = 
-        #audience = 
-        #subject = 
+        issuer                  = request_json.iss,       
+        audience                = request_json.aud,
+        expires_time            = request_json.exp,
+        issued_time             = request_json.iat,
         name                    = user_identity.first_name,         #user_identityfull_name,
         email                   = user_identity.email,
         email_verified          = user_identity.email_verified,
@@ -412,12 +379,12 @@ def create_drp_request_transaction(user_identity, covered_biz, reqest_json, resp
 
     data_rights_request = DataRightsRequest.objects.create(
         #request_id not sent on /excercise call
-        #meta                    = reqest_json['meta'],
-        relationships           = reqest_json['relationships'],
-        status_callback         = reqest_json['status_callback'],
-        regime                  = reqest_json['regime'],
-        exercise                = reqest_json['exercise'],
-        #identity                = reqest_json['identity'],
+        #meta                    = request_json['meta'],
+        relationships           = request_json['relationships'],
+        status_callback         = request_json['status_callback'],
+        regime                  = request_json['regime'],
+        exercise                = request_json['exercise'],
+        #identity                = request_json['identity'],
     )
 
     data_rights_status = DataRightsStatus.objects.create(
@@ -480,18 +447,8 @@ def get_well_known(discovery_url):
     return response
 
 
-#POST /exercise
+#POST /exercise?kid={aa-id}
 def post_exercise_rights(request_url, bearer_token, request_jwt):
-
-    # Now for 0.6: POST /exercise?kid={aa-id}
-
-    """
-    curl -X 'POST' 
-    'http://localhost:8080/api/v1/drp/excercise'
-    -H 'accept: application/jwt'
-    -H 'Authorization: Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..Y2pZOkoc445kyqOZAKGjzw.-scnX7wxH2MeTohuCPPThCUFp7qUoyRA2hJlOsSUix6RmYRT2uz2sPUZnT-07-jYz3-32G07aIEyk30JeoHHsg3SMUa7V8Y2OlBI0WMaZ3QUscEuVZa7s3RuVVfvtePD195MMmH5w3RQkgxMrP8Lj8KubiYnRYw2n_rVt0crtP75s0NSnIF2ThWCAiq5gaGAdYSjzHwMWi9OAZekEuxNmFaTa2tu_j9Hi8uLbvjsp9-z5IjmGGsiTPNbPj5JgCWOxy-E-Ub6KMWMcCIxoLAki_Qfo5d1JwffvDQsEJT4zefm3HSdpFphv579KpgStLVhIh4r_5OnLl-w-ueHfDO3iCMgw8KIw7p5GtiXWggCejhJCohcM_g2msfG9OFeMd-7vLiFUuk4d4dzIbXXdOHGcv-lL3EyQUnRzQRXVGV3wHnxvN3Xyli4YQUqCk_qkJ1yf8LSJejqTklaCwovwuMWEu6ZwrXVq9OorMphHtnoRW-Ngw4oYa8SIME0YF3vdchCaglbNDhMVVjFkUkKsNBHfqUiZWLyXlNCluhQpMKORW5Uqk0mLtgLX_U5BlkibjcR9440UZvZoT_LBpiT21nLLtCdidHfW7bEgH9-bBMtoEwBeBM_RmxT1ysRKrdJ0NZCZgyU3FMijV-XFmIt2aZDaD2fnDJDBP1q0Aw1tVfucESZJHKUQtVKp6Q.EMaYOKnSqk2ApwP-uss3CA'
-    """
-
     request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
     response = requests.post(request_url, headers=request_headers, json=request_jwt)
@@ -500,23 +457,15 @@ def post_exercise_rights(request_url, bearer_token, request_jwt):
 
 
 # GET /status?request_id=c789ff35-7644-4ceb-9981-4b35c264aac3
-def get_status(request_url, bearer_token, request_id):
-    """
-    curl -X 'GET' 
-    'http://localhost:8080/api/v1/drp/status'
-    -H 'accept: application/jwt'
-    -H 'Authorization: Bearer eyJhbGciOiJkaXIiLCJlbmMiOiJBMjU2R0NNIn0..Y2pZOkoc445kyqOZAKGjzw.-scnX7wxH2MeTohuCPPThCUFp7qUoyRA2hJlOsSUix6RmYRT2uz2sPUZnT-07-jYz3-32G07aIEyk30JeoHHsg3SMUa7V8Y2OlBI0WMaZ3QUscEuVZa7s3RuVVfvtePD195MMmH5w3RQkgxMrP8Lj8KubiYnRYw2n_rVt0crtP75s0NSnIF2ThWCAiq5gaGAdYSjzHwMWi9OAZekEuxNmFaTa2tu_j9Hi8uLbvjsp9-z5IjmGGsiTPNbPj5JgCWOxy-E-Ub6KMWMcCIxoLAki_Qfo5d1JwffvDQsEJT4zefm3HSdpFphv579KpgStLVhIh4r_5OnLl-w-ueHfDO3iCMgw8KIw7p5GtiXWggCejhJCohcM_g2msfG9OFeMd-7vLiFUuk4d4dzIbXXdOHGcv-lL3EyQUnRzQRXVGV3wHnxvN3Xyli4YQUqCk_qkJ1yf8LSJejqTklaCwovwuMWEu6ZwrXVq9OorMphHtnoRW-Ngw4oYa8SIME0YF3vdchCaglbNDhMVVjFkUkKsNBHfqUiZWLyXlNCluhQpMKORW5Uqk0mLtgLX_U5BlkibjcR9440UZvZoT_LBpiT21nLLtCdidHfW7bEgH9-bBMtoEwBeBM_RmxT1ysRKrdJ0NZCZgyU3FMijV-XFmIt2aZDaD2fnDJDBP1q0Aw1tVfucESZJHKUQtVKp6Q.EMaYOKnSqk2ApwP-uss3CA'
-    """
-
+def get_status(request_url, request_id):
     status_request_url = request_url + "?request_id=" + request_id
-    request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
-    response = requests.get(status_request_url, headers=request_headers)
+    response = requests.get(status_request_url)
 
     return response
 
 
-
+#POST /revoke?kid={aa-id}
 def post_revoke(request_url, bearer_token, request_json):
     request_headers = {'Authorization': f"Bearer {bearer_token}"}
 
