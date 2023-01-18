@@ -40,7 +40,7 @@ REGIME_CHOICES = [
 
 """
 class RequestMetaData():
-    version     = "0.5"
+    version     = "0.6"
 """
 
 

@@ -34,7 +34,7 @@ def test_contains_version_field(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    return 'version' in response_json and response_json['version'] == '0.5'  
+    return 'version' in response_json and response_json['version'] == '0.6'  
 
 def test_contains_api_base(response):
     try:
@@ -91,12 +91,14 @@ def test_discovery_contains_no_unknown_fields(response):
     return True
 
 
-def test_discovery_endpoint(request_url, responses):
+def test_discovery_endpoint(request_url, response):
+    test_results = []
+
     """
     1.  GET .well-known/data-rights.json
         - Covered Business's domain SHOULD have a /.well-known/data-rights.json
         - Discovery Endpoint MUST be valid JSON
-        - Discovery Endpoint MUST contain a version field (currently 0.5)
+        - Discovery Endpoint MUST contain a version field (currently 0.6)
         - Discovery Endpoint MUST provide an API base
             - API base MUST be valid for subsequent calls
         - Discovery Endpoint MUST provide a list of supported actions
@@ -133,7 +135,7 @@ def test_discovery_endpoint(request_url, responses):
     is_valid_json = test_is_valid_json(response)
     test_results.append({'name': 'Is valid json', 'result': is_valid_json})
 
-    # test Discovery Endpoint MUST contain a version field (currently 0.5)
+    # test Discovery Endpoint MUST contain a version field (currently 0.6)
     contains_version_field = test_contains_version_field(response)
     test_results.append({'name': 'Contains version field', 'result': contains_version_field})
 
@@ -177,7 +179,7 @@ def test_is_data_rights_status_obj(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    # todo: for now we just check for requried fields; is there a better way ... ?    
+    # todo: for now we just check for requried fields; is there a better way, maybe by using types ... ?    
     for field in required_fields:
         if field not in response_json:
             return False
@@ -388,7 +390,6 @@ def test_is_reponse_valid_for_optin_voluntary(response):
     if is_valid_status and response_json['status'] == 'denied':
         return 'reason' in response_json and response_json['reason'] == 'outside_jurisdiction'
     return False 
-
 
 def test_excercise_endpoint(request_json, response):
     test_results = []
@@ -692,3 +693,16 @@ def test_status_endpoint(request_url, response):
         test_results.append({ 'name': 'Response valid for status expired', 'result': is_reponse_valid_for_status_expired })
 
     return test_results
+
+
+#-------------------------------------------------------------------------------------------------#
+# test_status_endpoint
+
+# todo: implement ...
+
+"""
+4.  POST /revoke response
+    - Response MUST adhere to the Exercise Status Schema. 
+    - Response MUST contain the new state.
+"""
+
