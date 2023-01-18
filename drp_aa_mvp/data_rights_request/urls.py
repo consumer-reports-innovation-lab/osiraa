@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from . import pynacl_validator
 
 
 urlpatterns = [
@@ -23,5 +24,7 @@ urlpatterns = [
     #path('request_sent', views.request_sent, name='request_sent'),
 
     path('data_rights_request_sent_return', views.data_rights_request_sent_return, 
-        name='data_rights_request_sent_return')
+         name='data_rights_request_sent_return'),
+
+    path('pynacl_validate', pynacl_validator.validate_pynacl, name='validate_pynacl'),
 ]
