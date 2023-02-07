@@ -100,7 +100,7 @@ else:
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent',
             'USER': os.environ.get('POSTGRES_USER') or 'postgres',
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'postgres',
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'rootz',
             'HOST': os.environ.get('POSTGRES_HOST') or 'localhost'
         },
     }
