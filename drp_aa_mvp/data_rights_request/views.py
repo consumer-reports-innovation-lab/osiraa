@@ -6,6 +6,7 @@ import requests
 import json
 import jwt
 import validators
+import base64
 
 from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
 from user_identity.models import IdentityUser
@@ -328,11 +329,14 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
 
     return request_json
 
-
 def create_jwt(user_identity, covered_biz):
-    jwt_algo    = "HS256"
-    jwt_secret  = covered_biz.api_secret
-    id_payload  = create_id_payload(user_identity, covered_biz)
+    jwt_algo        = "HS256"
+    jwt_secret_enc  = covered_biz.api_secret
+    if covered_biz.decode_api_secret == True:
+      jwt_secret    = base64.b64decode(jwt_secret_enc)
+    else:
+      jwt_secret    = jwt_secret_enc
+    id_payload      = create_id_payload(user_identity, covered_biz)
 
     return jwt.encode(
         id_payload,

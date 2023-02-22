@@ -37,6 +37,7 @@ class CoveredBusiness(models.Model):
                                 default=list)
     api_secret            = models.CharField(max_length=127, blank=True, default='')
     auth_bearer_token     = models.CharField(max_length=4096, blank=True, default='')
+    decode_api_secret     = models.BooleanField(default=False)
 
     #list_of_rights
     #user_business_relationship
