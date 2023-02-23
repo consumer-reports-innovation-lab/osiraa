@@ -353,7 +353,7 @@ def create_id_payload (user_identity, covered_biz):
         "name": (user_identity.last_name + ", " + user_identity.first_name),     
         "email": user_identity.email,      
         "phone_number": user_identity.phone_number,
-        "address": user_identity.address1
+        "address": user_identity.get_address(),
     }
 
     return id_payload
