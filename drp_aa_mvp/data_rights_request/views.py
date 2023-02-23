@@ -13,6 +13,8 @@ from nacl.encoding import HexEncoder
 
 import os
 import validators
+import base64
+import arrow
 
 from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
 from user_identity.models import IdentityUser
@@ -483,7 +485,6 @@ def set_agent_info_params(response):
         print('**  WARNING - set_agent_info_params(): missing keys **')
         return False
 
-
 #--------------------------------------------------------------------------------------------------#
 
 def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
@@ -551,14 +552,25 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         #identity                = request_json['identity'],
     )
 
+    from typing import Optional
+    def maybe_enrich_date(dt: Optional[str]):
+        '''
+        arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
+        '''
+        if dt is None:
+            return ""
+        return arrow.get(dt)
+
     data_rights_status = DataRightsStatus.objects.create(
+        # required fields
         request_id              = response_json['request_id'],
-        received_at             = response_json['received_at'],
-        expected_by             = response_json['expected_by'],
-        processing_details      = response_json['processing_details'],
         status                  = response_json['status'],
-        reason                  = response_json['reason'],
-        user_verification_url   = response_json['user_verification_url'],
+        # optional/possible fields
+        received_at             = maybe_enrich_date(response_json.get('received_at')),
+        expected_by             = maybe_enrich_date(response_json.get('expected_by')),
+        processing_details      = response_json.get('processing_details'),
+        reason                  = response_json.get('reason'),
+        user_verification_url   = response_json.get('user_verification_url'),
     )
 
     #  todo: this doesn't seem to work ...
