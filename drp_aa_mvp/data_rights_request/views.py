@@ -7,6 +7,7 @@ import json
 import jwt
 import validators
 import base64
+import arrow
 
 from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
 from user_identity.models import IdentityUser
@@ -344,7 +345,6 @@ def create_jwt(user_identity, covered_biz):
         jwt_algo
     )
 
-
 def create_id_payload (user_identity, covered_biz):
     id_payload = {
         "iss": "https://consumerreports.com/",  # will match an entry in DB of trusted partners ...
@@ -396,14 +396,25 @@ def create_drp_request_transaction(user_identity, covered_biz, reqest_json, resp
         #identity                = reqest_json['identity'],
     )
 
+    from typing import Optional
+    def maybe_enrich_date(dt: Optional[str]):
+        '''
+        arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
+        '''
+        if dt is None:
+            return ""
+        return arrow.get(dt)
+
     data_rights_status = DataRightsStatus.objects.create(
+        # required fields
         request_id              = response_json['request_id'],
-        received_at             = response_json['received_at'],
-        expected_by             = response_json['expected_by'],
-        processing_details      = response_json['processing_details'],
         status                  = response_json['status'],
-        reason                  = response_json['reason'],
-        user_verification_url   = response_json['user_verification_url'],
+        # optional/possible fields
+        received_at             = maybe_enrich_date(response_json.get('received_at')),
+        expected_by             = maybe_enrich_date(response_json.get('expected_by')),
+        processing_details      = response_json.get('processing_details'),
+        reason                  = response_json.get('reason'),
+        user_verification_url   = response_json.get('user_verification_url'),
     )
 
     #  todo: this doesn't seem to work ...
