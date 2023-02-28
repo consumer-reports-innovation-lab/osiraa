@@ -1,27 +1,27 @@
+import base64
+import json
+import os
+import re
 from datetime import datetime
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
+import arrow
+import jwt
+import requests
+import validators
+from covered_business.models import CoveredBusiness
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-
-import requests
-import json
-
 from nacl import signing
-from nacl.public import PrivateKey
 from nacl.encoding import HexEncoder
-
-import os
-import validators
-import base64
-import arrow
-
-from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
+from nacl.public import PrivateKey
+from reporting.views import (test_discovery_endpoint, test_excercise_endpoint,
+                             test_status_endpoint)
 from user_identity.models import IdentityUser
-from covered_business.models import CoveredBusiness
-from reporting.views import test_discovery_endpoint, test_pairwise_key_setup_endpoint, test_agent_information_endpoint, test_excercise_endpoint, test_status_endpoint, test_revoked_endpoint
 
+from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
+                     DrpRequestTransaction, IdentityPayload)
 
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
