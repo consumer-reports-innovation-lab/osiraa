@@ -1,3 +1,5 @@
+from typing import Optional
+
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -15,7 +17,7 @@ from covered_business.models import CoveredBusiness
 from reporting.views import test_discovery_endpoint, test_excercise_endpoint, test_status_endpoint
 
 
-selected_covered_biz: CoveredBusiness = None
+selected_covered_biz: Optional[CoveredBusiness] = None
 
 
 def index(request):
