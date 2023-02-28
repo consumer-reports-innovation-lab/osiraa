@@ -39,12 +39,13 @@ class IdentityUser(models.Model): #(AbstractEmailUser, UUIDModel):
             "postal_code": self.zip_postal,
             # country?
         }
-
-        distilled = any([self.address1,
-                         self.address2,
-                         self.city,
-                         self.state_province])
-
+        distilled = filter(
+            lambda x: x!="" and x is not None,
+            [self.address1,
+             self.address2,
+             self.city,
+             self.state_province]
+        )
         if distilled:
             intermediate["formatted"] = '\n'.join(distilled)
 
