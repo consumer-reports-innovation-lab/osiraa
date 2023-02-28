@@ -552,14 +552,16 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         #identity                = request_json['identity'],
     )
 
-    from typing import Optional
     def maybe_enrich_date(dt: Optional[str]):
         '''
         arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
         '''
         if dt is None:
-            return ""
-        return arrow.get(dt)
+            return None
+        if re.search(r'-[0-9]{4}$', dt):
+            dt = dt[:-5] # sickos.jpg
+
+        return arrow.get(dt).datetime
 
     data_rights_status = DataRightsStatus.objects.create(
         # required fields
