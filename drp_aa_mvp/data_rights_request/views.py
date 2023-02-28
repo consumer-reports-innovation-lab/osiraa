@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Optional
+
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -22,7 +23,6 @@ from covered_business.models import CoveredBusiness
 from reporting.views import test_discovery_endpoint, test_pairwise_key_setup_endpoint, test_agent_information_endpoint, test_excercise_endpoint, test_status_endpoint, test_revoked_endpoint
 
 
-
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
 
@@ -39,7 +39,7 @@ verify_key = signing_key.verify_key
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
 verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
 
-selected_covered_biz: CoveredBusiness = None
+selected_covered_biz: Optional[CoveredBusiness] = None
 
 
 def index(request):
