@@ -1,21 +1,22 @@
+import base64
+import json
+import re
 from typing import Optional
 
+import arrow
+import jwt
+import requests
+import validators
+from covered_business.models import CoveredBusiness
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-
-import requests
-import json
-import jwt
-import validators
-import base64
-import arrow
-
-from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
+from reporting.views import (test_discovery_endpoint, test_excercise_endpoint,
+                             test_status_endpoint)
 from user_identity.models import IdentityUser
-from covered_business.models import CoveredBusiness
-from reporting.views import test_discovery_endpoint, test_excercise_endpoint, test_status_endpoint
 
+from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
+                     DrpRequestTransaction, IdentityPayload)
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
