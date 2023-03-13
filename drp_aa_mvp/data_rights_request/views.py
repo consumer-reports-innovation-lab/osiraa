@@ -552,27 +552,17 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         #identity                = request_json['identity'],
     )
 
-    def maybe_enrich_date(dt: Optional[str]):
-        '''
-        arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
-        '''
-        if dt is None:
-            return None
-        if re.search(r'-[0-9]{4}$', dt):
-            dt = dt[:-5] # sickos.jpg
-
-        return arrow.get(dt).datetime
-
     data_rights_status = DataRightsStatus.objects.create(
         # required fields
         request_id              = response_json['request_id'],
         status                  = response_json['status'],
         # optional/possible fields
-        received_at             = maybe_enrich_date(response_json.get('received_at')),
-        expected_by             = maybe_enrich_date(response_json.get('expected_by')),
         processing_details      = response_json.get('processing_details'),
         reason                  = response_json.get('reason'),
         user_verification_url   = response_json.get('user_verification_url'),
+        # these fields need to be coerced to a datetime from arbitrary timestamps
+        received_at             = enrich_date(response_json.get('received_at')),
+        expected_by             = enrich_date(response_json.get('expected_by')),
     )
 
     #  todo: this doesn't seem to work ...
@@ -590,6 +580,20 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     return transaction
+
+
+def enrich_date(dt: Optional[str]):
+    '''
+    arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
+
+    additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
+    '''
+    if dt is None:
+        return None
+    if re.search(r'-[0-9]{4}$', dt):
+        dt = dt[:-5] # sickos.jpg
+
+    return arrow.get(dt).datetime
 
 
 def get_request_id (covered_biz, user_identity):
