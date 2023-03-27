@@ -40,7 +40,7 @@ REGIME_CHOICES = [
 
 """
 class RequestMetaData():
-    version     = "0.6"
+    version     = "0.7"
 """
 
 
@@ -211,23 +211,3 @@ class DrpRequestTransaction(models.Model):
     #status_requests = models.ManyToManyField(DrpRequestStatusPair)
     #revoke_request  = models.ForeignKey(DrpRequestStatusPair, related_name='revoke_request', null=True, on_delete=models.CASCADE)
 
-    # todo: do we need a to_string() method or anything like that ... ?
-
-
-# ----------------------------------------------------------------------------------------------- #
-
-# from drp-cert/models/base.py ...
-
-"""
-#import jwt
-
-jwt_secret  = "secret"  #"testing"
-jwt_algo    = "HS256"
-
-def jwt_dumps(value, secret = jwt_secret, algo = jwt_algo):
-    return jwt.encode(
-        value,
-        secret,
-        algo
-    )
-"""

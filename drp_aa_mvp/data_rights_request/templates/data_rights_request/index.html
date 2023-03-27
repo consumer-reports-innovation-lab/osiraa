@@ -26,7 +26,7 @@
 
 <form action="send_request_discover_data_rights" method="POST" >
     {% csrf_token %}
-    <p><b>Discover Data Rights</b></p>
+    <p><b>Discover Data Rights</b> (GET /.well-known/data-rights.json)</p>
     <p><span style="display: inline-block; width: 180px;">PIP or Covered Business</span> {{selected_covered_biz}}</p>
     <input type="hidden" name="sel_covered_biz_id" value={{selected_covered_biz.id}}>
     <input type="submit" value="Discover Data Rights">
@@ -36,9 +36,33 @@
 <hr/>
 <br/>
 
+<form action="setup_pairwise_key" method="POST" >
+    {% csrf_token %}
+    <p><b>Setup Pair-wise Key</b> (POST /v1/agent/{agent-id})</p>
+    <p><span style="display: inline-block; width: 180px;">Covered Business</span> {{selected_covered_biz}}</p>
+    <input type="hidden" name="sel_covered_biz_id" value={{selected_covered_biz.id}}>
+    <input type="submit" value="Setup Pair-wise Ke">
+</form>
+
+<br/>
+<hr/>
+<br/>
+
+<form action="get_agent_information" method="POST" >
+    {% csrf_token %}
+    <p><b>Get Agent Information</b> (GET /v1/agent/{agent-id})</p>
+    <p><span style="display: inline-block; width: 180px;">Covered Business</span> {{selected_covered_biz}}</p>
+    <input type="hidden" name="sel_covered_biz_id" value={{selected_covered_biz.id}}>
+    <input type="submit" value="Get Agent Information">
+</form>
+
+<br/>
+<hr/>
+<br/>
+
 <form action="send_request_excercise_rights" method="POST" >
     {% csrf_token %}
-    <p><b>Excercise Data Rights</b></p>
+    <p><b>Excercise Data Rights</b> (POST /v1/data-right-request/)</p>
     <p><span style="display: inline-block; width: 180px;">PIP or Covered Business</span> {{selected_covered_biz}}</p>
     <p><span style="display: inline-block; width: 180px;">User Identity</span> 
         <select style="display: inline-block; width: 240px;" name="user_identity">
@@ -70,7 +94,7 @@
 
 <form action="send_request_get_status" method="POST" >
     {% csrf_token %}
-    <p><b>Get Status for a Data Rights Request</b></p>
+    <p><b>Get Status for a Data Rights Request</b> (GET /v1/data-rights-request/{request_id})</p>
     <p><span style="display: inline-block; width: 180px;">Covered Business</span> {{selected_covered_biz}}</p>
     <p><span style="display: inline-block; width: 180px;">User Identity</span> 
         <select style="display: inline-block; width: 240px;" name="user_identity">
@@ -83,14 +107,13 @@
     <input type="submit" value="Get Status">
 </form>
 
-<!--
 <br/>
 <hr/>
 <br/>
 
 <form action="send_request_revoke" method="POST" >
     {% csrf_token %}
-    <p><b>Revoke a Data Rights Request</b></p>
+    <p><b>Revoke a Data Rights Request</b> (DELETE /v1/data-rights-request/{request_id})</p>
     <p><span style="display: inline-block; width: 180px;">Covered Business</span> {{selected_covered_biz}}</p>
     <p><span style="display: inline-block; width: 180px;">User Identity</span> 
         <select style="display: inline-block; width: 240px;" name="user_identity">
@@ -102,7 +125,6 @@
     <input type="hidden" name="sel_covered_biz_id" value={{selected_covered_biz.id}}>
     <input type="submit" value="Revoke Rights Request">
 </form>
--->
 
 <br/>
 <br/>
