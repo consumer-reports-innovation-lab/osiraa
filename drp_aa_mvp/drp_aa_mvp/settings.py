@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'covered_business.apps.CoveredBusinessConfig',
     'data_rights_request.apps.DataRightsRequestConfig',
     'reporting.apps.ReportingConfig',
+    'drp_pip.apps.DrpPipConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
