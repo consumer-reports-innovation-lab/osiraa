@@ -102,7 +102,8 @@ else:
             'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent',
             'USER': os.environ.get('POSTGRES_USER') or 'postgres',
             'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'rootz',
-            'HOST': os.environ.get('POSTGRES_HOST') or 'localhost'
+            'HOST': os.environ.get('POSTGRES_HOST') or 'localhost',
+            'PORT': os.environ.get('POSTGRES_PORT') or '5432'
         },
     }
 
