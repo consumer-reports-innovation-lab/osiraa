@@ -33,8 +33,26 @@ auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.g
 # todo: these keys actually should be generated offline before we start using the app 
 # and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
-signing_key = signing.SigningKey.generate()
-verify_key = signing_key.verify_key
+def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
+    path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
+    if not os.path.exists(path):
+        with open(path, "w") as f:
+           signing_key = signing.SigningKey.generate()
+           verify_key = signing_key.verify_key
+           json.dump({
+               "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
+               "verify_key": verify_key.decode()
+           }, f)
+
+    with open(path, "r") as f:
+        jason = json.load(f)
+        return (signing.SigningKey(jason["signing_key"], encoder=HexEncoder),
+                signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
+    
+ 
+
+signing_key, verify_key = load_pynacl_keys()
+    
 
 # the public key and signing key as b64 strings
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
