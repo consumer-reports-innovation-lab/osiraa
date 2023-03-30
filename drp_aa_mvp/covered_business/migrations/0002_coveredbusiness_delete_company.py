@@ -23,8 +23,5 @@ class Migration(migrations.Migration):
                 ('delete_data_details', models.TextField(blank=True)),
                 ('request_description', models.TextField(blank=True)),
             ],
-        ),
-        migrations.DeleteModel(
-            name='Company',
-        ),
+        )
     ]
