@@ -1,18 +1,28 @@
+import json
+import os
+import re
+
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from typing import List
+from django.views.decorators.http import require_http_methods
+from django.http import JsonResponse, HttpResponse, HttpRequest
+import arrow
 
-from nacl.encoding import Base64Encoder
+from nacl.encoding import HexEncoder
 from nacl.signing import VerifyKey
+from nacl.utils import random
 import nacl.exceptions
-import json
-from datetime import datetime
+
+from .models import AuthorizedAgent
 
 # TKTKTK cross-module import
-from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
+# from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
+
+import logging
+logger = logging.getLogger(__name__)
 
 VERIFY_KEY_HEADER = "X-DRP-VerifyKey"
+OSIRAA_PIP_CB_ID  = os.environ.get("CB_ID", "osiraa-local-001")
 
 @csrf_exempt
 def static_discovery(request):
@@ -23,123 +33,132 @@ def static_discovery(request):
     base["api_base"] = f"{request.scheme}://{request.get_host()}/pip/",
     return JsonResponse(base)
 
-@csrf_exempt
-def register_agent(request):
-    pass
+"""
+Privacy Infrastructure Providers MUST validate the message in this order:
+
+# Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the Bearer Token.
+- That the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
+- That they are the Covered Business specified inside the business-id claim
+- That the current time is after the Timestamp issued-at claim
+- That the current time is before the Expiration expires-at claim
+"""
 
 @csrf_exempt
-def agent_status(request):
-    pass
+@require_http_methods(["GET", "POST"])
+def agent(request, aa_id: str):
+    """
+    urlconfs can't choose a route based on method so we'll do it ourselves
+    I really do hate django.
+    """
+    if request.method == 'GET':
+        agent_status(request, aa_id)
+    elif request.method == 'POST':
+        register_agent(request, aa_id)
+
+
+def register_agent(request, aa_id: str):
+    agent = AuthorizedAgent.fetch_by_id(aa_id)
+    if agent is None:
+        # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
+        logger.error(f"could not find authorized agent for {aa_id}")
+        return HttpResponse(status=403)
+
+    try:
+        message = validate_message_to_agent(agent, request)
+    except:
+        return HttpResponse(status=403)
+
+    # make a token and persist it...
+    agent.bearer_token = HexEncoder.encode(random(size=64)).decode()
+    try:
+        agent.save()
+        return  JsonResponse({
+            "agent-id": message["agent-id"],
+            "token":    agent.bearer_token
+        })
+    except:
+        return HttpResponse(b"Something went wonky! Token did not persist.", status=500)
+
+@csrf_exempt
+def agent_status(request, aa_id: str):
+    """
+    This method just looks to see that the bearer token is in the DB.
+    """
+    auth_header = request.headers.get("Authorization")
+    extractor = r"Bearer ([a-zA-Z0-9=+\-_/]*)"
+    matches = re.match(extractor, auth_header)
+    if matches is None:
+        logger.error(f"Auth header did not parse.")
+        return HttpResponse(status=403)
+    btok = matches.group(1)
+
+    agent = AuthorizedAgent.fetch_by_bearer_token(btok)
+
+    if agent.aa_id != aa_id:
+        logger.error(f"bearer token did not match expected AA {aa_id}???")
+        return HttpResponse(status=403)
+
+    if agent is None:
+        logger.error(f"tok did not resolve to agent; caller expected {aa_id}")
+        return HttpResponse(status=403)
+
+    return JsonResponse({})
+
 
 
 @csrf_exempt
 def validate_pynacl(request):
-    '''Validate an application/octet-stream request containing the
-    NaCL signed token with the verify key stuffed in to a header,
-    base64 encoded.
-
-    This method DOES NOT do a validation sufficient enough to be a
-    drop-in validator for DRP Data Rights Requests and only exists to
-    exhibit the cryptographic signing/verifying flows via PyNaCl. Keys
-    SHOULD NOT be sent in-band in this method as no real trust root is
-    established.
-
-    As the DRP public key directories are designed this code will be
-    iterated upon as a test-bed for this network operating model.
-    '''
-
-    context = dict(valid=True,
-                   reasons=list())
-
-    # TKTKTK add model for drp_pip.authorized_agent w/ this key in it.
-    if VERIFY_KEY_HEADER not in request.headers:
-      context["valid"] = False
-      context["reasons"] += [f"No {VERIFY_KEY_HEADER} in request"]
-      return render(request, 'drp_pip/validate_pynacl.html', context)
-
-    verify_key = VerifyKey(
-        request.headers.get(VERIFY_KEY_HEADER),
-        encoder=Base64Encoder
-    )
-
-    verified_obj = bytes()
-    try:
-      blob = request.read()
-      verified_obj = verify_key.verify(blob)
-    except nacl.exceptions.BadSignatureError:
-      context["valid"] = False
-      context["reasons"] += [f"BadSignatureError raised"]
-      return render(request, 'drp_pip/validate_pynacl.html', context)
-
-    verified_dict = dict()
-    try:
-      verified_dict = json.loads(verified_obj)
-    except json.JSONDecodeError:
-      context["valid"] = False
-      context["reasons"] += [f"JSONDecodeError raised"]
-      return render(request, 'drp_pip/validate_pynacl.html', context)
-
-    context = validate_inner_dict(verified_dict, context)
-
-    # TKTKTK persist request to DB for the request_handler endpoint
-    
-    return render(request, 'drp_pip/validate_pynacl.html', context)
-
-
-def validate_inner_dict(obj: dict, context: dict):
-    '''validate fields of obj as a verified, deserialized DataRightsRequest
-
-    TODO: shove this in to the 0.6-schema model object and call
-    is_valid() on it, but for now we just check keys exist etc.
-    '''
-    check_fields = ["iss", "aud", "exp", "iat"]
-    for field in check_fields:
-        if field not in obj:
-            context["valid"] = False
-            context["reasons"] += [f"{field} is missing in object"]
-
-    check_datetime_fields = ["exp", "iat"]
-    for field in check_datetime_fields:
-        try:
-            datetime.fromisoformat(obj[field])
-        except ValueError:
-            context["valid"] = False
-            context["reasons"] += [f"{field} is not ISO 8601"]
-
-
-    ver = obj.get("drp.version", None)
-    if ver != "0.6":
-        context["valid"] = False
-        context["reasons"] += [f"DRP version {ver} is not 0.6"]
-
-    right = obj.get("exercise", None)
-    # extract from tuple
-    if right not in [action[1] for action in ACTION_CHOICES]:
-        context["valid"] = False
-        context["reasons"] += [f"{right} not in valid actions"]
-
-    regime = obj.get("regime", None)
-    # extract from tuple
-    if regime not in [regime[1] for regime in REGIME_CHOICES]:
-        context["valid"] = False
-        context["reasons"] += [f"{regime} not valid"]
-
-    shall_claims = ["name", "email", "email_verified"]
-    for field in shall_claims:
-        if field not in obj:
-            context["valid"] = False
-            context["reasons"] += [f"{field} is missing in object"]
-
-    may_claims = ["phone_number", "phone_number_verified", "address", "address_verified", "power_of_attorney"]
-    for field in may_claims:
-        if field not in obj:
-            context["reasons"] += [f"{field} is missing in object"]
-
-    return context
-
-
-@csrf_exempt
-def request_handler(request):
     pass
 
 
+@csrf_exempt
+def request_handler(request, request_id: str):
+    pass
+
+def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> dict:
+    """Validate the message is coming from the specified agent and
+    destined to us in a reasonable time window. Returns the
+    deserialized message or raises.
+    """
+    now = arrow.get()
+
+    aa_id = agent.aa_id
+    verify_key_hex = agent.verify_key
+    verify_key = VerifyKey(verify_key_hex, encoder=HexEncoder)
+
+    try:
+        # don't need to do anything here -- if it doesn't raise it's verified!
+        serialized_message = verify_key.verify(request.body)
+    except nacl.exceptions.BadSignatureError as e:
+        # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
+        logger.error(f"bad signature from {aa_id}: {e}")
+        raise e
+
+    message = json.loads(serialized_message)
+
+    aa_id_claim = message["agent-id"]
+    if aa_id_claim != aa_id:
+        # Validate that the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
+        logger.error(f"outer aa {aa_id} doesn't match claim {aa_id_claim}!!")
+        raise Exception()
+
+    business_id_claim = message["business-id"]
+    if business_id_claim != OSIRAA_PIP_CB_ID:
+        # - That they are the Covered Business specified inside the business-id claim
+        logger.error(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
+        raise Exception()
+
+    expires_at_claim = message["expires-at"]
+    if now > arrow.get(expires_at_claim):
+        # TKTKTK: maybe worth checking that it's within like 15 minutes or something just to be sure the AA is compliant?
+        # - That the current time is after the Timestamp issued-at claim
+        logger.error(f"Message has expired! {expires_at_claim}")
+        raise Exception()
+
+    issued_at_claim = message["issued-at"]
+    if arrow.get(issued_at_claim) > now:
+        # - That the current time is before the Expiration expires-at claim
+        logger.error(f"Message from the future??? {issued_at_claim}")
+        raise Exception()
+
+    return message

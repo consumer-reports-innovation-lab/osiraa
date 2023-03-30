@@ -7,8 +7,6 @@ urlpatterns = [
 
     path('.well-known/data-rights.json', views.static_discovery, name='discovery'),
     path('v1/data-rights-request/', views.validate_pynacl, name='receive_request'),
-    path('v1/data-rights-request/<str:id>', views.request_handler, name='request_handler'),
-    path('v1/agent/<str:id>', views.register_agent, name='register_agent'),
-    path('v1/agent/', views.agent_status, name='agent_status'),
-    # path('/v1/data-rights-request/', validate_pynacl, name='validate_pynacl'),
+    path('v1/data-rights-request/<str:request_id>', views.request_handler, name='request_handler'),
+    path('v1/agent/<str:aa_id>', views.agent, name='agent_router_ugghhh'),
 ]
