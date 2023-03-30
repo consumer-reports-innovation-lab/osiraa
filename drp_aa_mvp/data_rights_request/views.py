@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 import os
 import re
@@ -418,14 +419,14 @@ def sign_request(signing_key, request_obj):
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(minutes=15)
+    issued_time     = arrow.get()
+    expires_time    = issued_time.shift(minutes=15)
 
     request_json = {
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz_id,
-        "expires-at":   expires_time,
-        "issued-at":    issued_time,
+        "expires-at":   str(expires_time),
+        "issued-at":    str(issued_time),
     }
 
     return request_json

@@ -938,7 +938,7 @@ def test_agent_id_matches_request(response, request_url):
     # todo: write the test ...
     return True
 
-def test_contains_token_field(response, request_url):
+def test_contains_token_field(response):
     try:
         response_json = json.loads(response.text)
     except ValueError as e:

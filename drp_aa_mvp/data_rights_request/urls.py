@@ -24,4 +24,6 @@ urlpatterns = [
 
     path('data_rights_request_sent_return', views.data_rights_request_sent_return, 
          name='data_rights_request_sent_return'),
+
+    path('setup_pairwise_key', views.setup_pairwise_key, name='setup_pairwise_key'),
 ]

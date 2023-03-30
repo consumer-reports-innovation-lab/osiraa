@@ -51,9 +51,9 @@ def agent(request, aa_id: str):
     I really do hate django.
     """
     if request.method == 'GET':
-        agent_status(request, aa_id)
+        return agent_status(request, aa_id)
     elif request.method == 'POST':
-        register_agent(request, aa_id)
+        return register_agent(request, aa_id)
 
 
 def register_agent(request, aa_id: str):
