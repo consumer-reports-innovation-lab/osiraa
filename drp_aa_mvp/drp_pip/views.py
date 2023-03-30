@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from typing import List
 
 from nacl.encoding import Base64Encoder
@@ -12,6 +13,24 @@ from datetime import datetime
 from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
 VERIFY_KEY_HEADER = "X-DRP-VerifyKey"
+
+@csrf_exempt
+def static_discovery(request):
+    base = {
+        "version": "0.7",
+        "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"]
+    }
+    base["api_base"] = f"{request.scheme}://{request.get_host()}/pip/",
+    return JsonResponse(base)
+
+@csrf_exempt
+def register_agent(request):
+    pass
+
+@csrf_exempt
+def agent_status(request):
+    pass
+
 
 @csrf_exempt
 def validate_pynacl(request):
@@ -124,10 +143,3 @@ def request_handler(request):
     pass
 
 
-@csrf_exempt
-def register_agent(request):
-    pass
-
-@csrf_exempt
-def agent_status(request):
-    pass

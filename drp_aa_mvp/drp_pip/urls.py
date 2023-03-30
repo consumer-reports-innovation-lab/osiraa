@@ -5,6 +5,7 @@ from . import views
 urlpatterns = [
     # path('', views.index, name='index'),
 
+    path('.well-known/data-rights.json', views.static_discovery, name='discovery'),
     path('v1/data-rights-request/', views.validate_pynacl, name='receive_request'),
     path('v1/data-rights-request/<str:id>', views.request_handler, name='request_handler'),
     path('v1/agent/<str:id>', views.register_agent, name='register_agent'),
