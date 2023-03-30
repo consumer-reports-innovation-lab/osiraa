@@ -27,8 +27,15 @@ from reporting.views import test_discovery_endpoint, test_pairwise_key_setup_end
 auth_agent_drp_id       = 'CR_AA_DRP_ID_001'
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status" 
 
-signing_key = None
-verify_key  = None
+# todo: these keys actually should be generated offline before we start using the app 
+# and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
+# for now we'll generate the keys one-time only
+signing_key = signing.SigningKey.generate()
+verify_key = signing_key.verify_key
+
+# the public key and signing key as b64 strings
+signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
+verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
 
 selected_covered_biz: CoveredBusiness = None
 
@@ -108,16 +115,6 @@ def setup_pairwise_key(request):
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     request_obj    = create_setup_pairwise_key_request_json(covered_biz_id)
 
-    # todo: these keys actually should be generated offline before we start using the app ...
-    # and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
-    if (signing_key == None):
-        # for now we'll generate the keys one-time only
-        signing_key, verify_key = generate_keys()
-
-        # the public key and signing key as b64 strings
-        signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
-        verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
-
     signed_request  = sign_request(signing_key, request_obj)
 
     if (validators.url(request_url)):
@@ -195,9 +192,6 @@ def send_request_excercise_rights(request):
     request_json    = create_excercise_request_json(user_identity, covered_biz, 
                                                     request_action, covered_regime)
     
-    if (signing_key == None):
-        signing_key, verify_key = generate_keys() # generate the keys one-time only
-
     signed_request  = sign_request(covered_biz.signing_key, request_json)
 
     if (validators.url(request_url)):
@@ -293,9 +287,6 @@ def send_request_revoke(request):
 
     request_url     =  "/v1/data-rights-request/" + request_id
     request_json    = create_revoke_request_json(reason)
-
-    if (signing_key == None):
-        signing_key, verify_key = generate_keys() # generate the keys one-time only
     
     signed_request  = sign_request(covered_biz.signing_key, request_json)
 
@@ -418,6 +409,12 @@ def get_request_actions_form_display (covered_biz):
 
 #--------------------------------------------------------------------------------------------------#
 
+def sign_request(signing_key, request_obj):
+    signed_obj = signing_key.sign(json.dumps(request_obj).encode())
+
+    return signed_obj
+
+
 def create_setup_pairwise_key_request_json(covered_biz_id):
     issued_time     = datetime.datetime.now()
     expires_time    = issued_time + datetime.timedelta(minutes=15)
@@ -485,21 +482,6 @@ def set_agent_info_params(response):
     except KeyError as e:
         print('**  WARNING - set_agent_info_params(): missing keys **')
         return False
-
-
-#--------------------------------------------------------------------------------------------------#
-
-def generate_keys() -> Tuple[bytes, bytes]:
-    signing_key = signing.SigningKey.generate()
-    verify_key = signing_key.verify_key
-
-    return (signing_key, verify_key)
-
-
-def sign_request(signing_key, request_obj):
-    signed_obj = signing_key.sign(json.dumps(request_obj).encode())
-
-    return signed_obj
 
 
 #--------------------------------------------------------------------------------------------------#
