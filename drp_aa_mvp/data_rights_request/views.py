@@ -134,7 +134,7 @@ def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
-    request_obj    = create_setup_pairwise_key_request_json(covered_biz_id)
+    request_obj    = create_setup_pairwise_key_request_json(covered_biz.cb_id)
 
     signed_request  = sign_request(signing_key, request_obj)
 
