@@ -18,7 +18,7 @@ from nacl import signing
 from nacl.encoding import HexEncoder
 from nacl.public import PrivateKey
 from reporting.views import (test_discovery_endpoint, test_excercise_endpoint,
-                             test_status_endpoint)
+                             test_status_endpoint, test_pairwise_key_setup_endpoint)
 from user_identity.models import IdentityUser
 
 from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
