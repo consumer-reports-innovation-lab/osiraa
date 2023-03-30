@@ -21,3 +21,6 @@ class AuthorizedAgent(models.Model):
     @classmethod
     def fetch_by_bearer_token(cls, token: str):
         return cls.objects.get(bearer_token=token)
+
+class MessageValidationException(Exception):
+    pass

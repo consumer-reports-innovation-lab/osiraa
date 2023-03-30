@@ -13,7 +13,7 @@ from nacl.signing import VerifyKey
 from nacl.utils import random
 import nacl.exceptions
 
-from .models import AuthorizedAgent
+from .models import AuthorizedAgent, MessageValidationException
 
 # TKTKTK cross-module import
 # from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
@@ -21,17 +21,15 @@ from .models import AuthorizedAgent
 import logging
 logger = logging.getLogger(__name__)
 
-VERIFY_KEY_HEADER = "X-DRP-VerifyKey"
-OSIRAA_PIP_CB_ID  = os.environ.get("CB_ID", "osiraa-local-001")
+OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 
 @csrf_exempt
 def static_discovery(request):
-    base = {
+    return JsonResponse({
         "version": "0.7",
-        "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"]
-    }
-    base["api_base"] = f"{request.scheme}://{request.get_host()}/pip/",
-    return JsonResponse(base)
+        "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
+        "api_base": f"{request.scheme}://{request.get_host()}/pip/",
+    })
 
 """
 Privacy Infrastructure Providers MUST validate the message in this order:
@@ -139,26 +137,22 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     aa_id_claim = message["agent-id"]
     if aa_id_claim != aa_id:
         # Validate that the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
-        logger.error(f"outer aa {aa_id} doesn't match claim {aa_id_claim}!!")
-        raise Exception()
+        raise MessageValidationException(f"outer aa {aa_id} doesn't match claim {aa_id_claim}!!")
 
     business_id_claim = message["business-id"]
     if business_id_claim != OSIRAA_PIP_CB_ID:
         # - That they are the Covered Business specified inside the business-id claim
-        logger.error(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
-        raise Exception()
+        raise MessageValidationException(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
 
     expires_at_claim = message["expires-at"]
     if now > arrow.get(expires_at_claim):
         # TKTKTK: maybe worth checking that it's within like 15 minutes or something just to be sure the AA is compliant?
         # - That the current time is after the Timestamp issued-at claim
-        logger.error(f"Message has expired! {expires_at_claim}")
-        raise Exception()
+        raise MessageValidationException(f"Message has expired! {expires_at_claim}")
 
     issued_at_claim = message["issued-at"]
     if arrow.get(issued_at_claim) > now:
         # - That the current time is before the Expiration expires-at claim
-        logger.error(f"Message from the future??? {issued_at_claim}")
-        raise Exception()
+        raise MessageValidationException(f"Message from the future??? {issued_at_claim}")
 
     return message
