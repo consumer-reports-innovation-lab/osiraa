@@ -34,9 +34,7 @@ class CoveredBusiness(models.Model):
     subtitle_description  = models.TextField(blank=True)
     discovery_endpoint    = models.URLField(max_length=127, blank=True, default='')
     api_root_endpoint     = models.URLField(max_length=127, blank=True, default='')
-    supported_actions     = ArrayField(models.CharField(max_length=31, choices=SUPPORTED_ACTION_CHOICES), 
-                                default=list)
-    api_secret            = models.CharField(max_length=127, blank=True, default='')
+    supported_actions     = ArrayField(models.CharField(max_length=31, choices=SUPPORTED_ACTION_CHOICES),  default=list)
     auth_bearer_token     = models.CharField(max_length=4096, blank=True, default='')
 
     #list_of_rights

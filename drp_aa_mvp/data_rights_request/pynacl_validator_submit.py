@@ -1,6 +1,7 @@
 import os
 import base64
 import json
+from typing import Tuple
 from urllib.request import urlopen, Request
 import urllib.error
 import logging
@@ -12,7 +13,7 @@ from nacl.encoding import Base64Encoder
 LOCAL_VALIDATOR_URL = "http://localhost:8000/data_rights_request/pynacl_validate"
 
 
-def generate_keys() -> (str, str):
+def generate_keys() -> Tuple[str, str]:
     '''
     Returns tuple with signing and verify key
     '''
@@ -58,6 +59,7 @@ def submit_signed_request(validator_url):
     # Submit the signed object to the /validate endpoint
     request = Request(validator_url, signed_obj)
     request.add_header("content-type", "application/octet-stream")
+
     # smuggle DRP verify key in-band. This is NOT sufficient for production security!
     request.add_header("X-DRP-VerifyKey", verify_key_b64)
 
@@ -69,6 +71,7 @@ def submit_signed_request(validator_url):
         resp = response.read().decode()
 
     return resp
+
 
 if __name__ == "__main__":
     print("Running...")

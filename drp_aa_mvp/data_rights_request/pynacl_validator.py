@@ -65,7 +65,7 @@ def validate_pynacl(request):
 def validate_inner_dict(obj: dict, context: dict):
     '''validate fields of obj as a verified, deserialized DataRightsRequest
 
-    TODO: shove this in to the 0.6-schema model object and call
+    TODO: shove this in to the schema model object and call
     is_valid() on it, but for now we just check keys exist etc.
     '''
     check_fields = ["iss", "aud", "exp", "iat"]
@@ -84,9 +84,9 @@ def validate_inner_dict(obj: dict, context: dict):
 
 
     ver = obj.get("drp.version", None)
-    if ver != "0.6":
+    if ver != "0.7":
         context["valid"] = False
-        context["reasons"] += [f"DRP version {ver} is not 0.6"]
+        context["reasons"] += [f"DRP version {ver} is not 0.7"]
 
     right = obj.get("exercise", None)
     # extract from tuple

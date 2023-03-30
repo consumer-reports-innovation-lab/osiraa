@@ -28,5 +28,26 @@ class IdentityUser(models.Model): #(AbstractEmailUser, UUIDModel):
     def __str__(self):
         return (self.last_name + ', ' + self.first_name)
 
-    #todo: return full_name, full_address    
+    def get_full_name(self):
+        return (self.last_name + ', ' + self.first_name)
+
+    def get_address(self):
+        intermediate = {
+            "street_address": '\n'.join([self.address1, self.address2]),
+            "locality": self.city,
+            "region": self.state_province,
+            "postal_code": self.zip_postal,
+            # country?
+        }
+
+        distilled = any([self.address1,
+                         self.address2,
+                         self.city,
+                         self.state_province])
+
+        if distilled:
+            intermediate["formatted"] = '\n'.join(distilled)
+
+        # strip empty keys
+        return { k: v for k, v in intermediate.items() if v }
  

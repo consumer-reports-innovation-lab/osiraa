@@ -70,6 +70,7 @@ pycparser==2.21
 pyflakes==2.3.1
 Pygments==2.10.0
 PyJWT==2.1.0
+PyNaCl==1.5.0
 pyparsing==3.0.6
 python-dateutil==2.8.2
 pytz==2021.1
@@ -92,4 +93,4 @@ Werkzeug==2.0.1
 whitenoise==5.3.0
 woopra==0.3.2
 woopra-tracker==0.3
-PyNaCl==1.5.0
+
