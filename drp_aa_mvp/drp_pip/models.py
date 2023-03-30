@@ -10,3 +10,14 @@ class AuthorizedAgent(models.Model):
 
     verify_key            = models.TextField('Hex encoded key to verify signed requests')
     bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def fetch_by_id(cls, aa_id: str):
+        return cls.objects.get(aa_id=aa_id)
+
+    @classmethod
+    def fetch_by_bearer_token(cls, token: str):
+        return cls.objects.get(bearer_token=token)
