@@ -9,3 +9,4 @@ class AuthorizedAgent(models.Model):
     subtitle_description  = models.TextField(blank=True)
 
     verify_key            = models.TextField('Hex encoded key to verify signed requests')
+    bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
