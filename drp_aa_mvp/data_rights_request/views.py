@@ -549,7 +549,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         audience                = request_json.aud,
         expires_time            = request_json.exp,
         issued_time             = request_json.iat,
-        name                    = user_identity.user_identity.full_name,
+        name                    = user_identity.get_full_name(),
         email                   = user_identity.email,
         email_verified          = user_identity.email_verified,
         phone_number            = user_identity.phone_number,

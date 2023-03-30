@@ -28,7 +28,9 @@ class IdentityUser(models.Model): #(AbstractEmailUser, UUIDModel):
     def __str__(self):
         return (self.last_name + ', ' + self.first_name)
 
-    #todo: return full_name, full_address    
+    def get_full_name(self):
+        return (self.last_name + ', ' + self.first_name)
+
     def get_address(self):
         intermediate = {
             "street_address": '\n'.join([self.address1, self.address2]),
