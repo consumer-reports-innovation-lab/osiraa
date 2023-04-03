@@ -41,7 +41,7 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
            verify_key = signing_key.verify_key
            json.dump({
                "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
-               "verify_key": verify_key.decode()
+               "verify_key": verify_key.encode(encoder=HexEncoder).decode()
            }, f)
 
     with open(path, "r") as f:
