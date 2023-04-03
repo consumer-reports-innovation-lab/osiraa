@@ -10,9 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='cb_id',
-            field=models.CharField(blank=True, default='', max_length=63),
-        ),
     ]

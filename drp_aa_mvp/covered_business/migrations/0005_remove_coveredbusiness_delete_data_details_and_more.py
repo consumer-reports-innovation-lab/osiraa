@@ -10,22 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='coveredbusiness',
-            name='delete_data_details',
-        ),
-        migrations.RemoveField(
-            model_name='coveredbusiness',
-            name='opt_out_details',
-        ),
-        migrations.RemoveField(
-            model_name='coveredbusiness',
-            name='request_description',
-        ),
-        migrations.RemoveField(
-            model_name='coveredbusiness',
-            name='request_email',
-        ),
         migrations.AddField(
             model_name='coveredbusiness',
             name='api_endpoint',

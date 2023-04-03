@@ -10,14 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RenameField(
-            model_name='coveredbusiness',
-            old_name='api_endpoint',
-            new_name='api_root_endpoint',
-        ),
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='discovery_endpoint',
-            field=models.URLField(blank=True, default='', max_length=127),
-        ),
     ]

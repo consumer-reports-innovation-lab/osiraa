@@ -10,10 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='coveredbusiness',
-            name='is_internal_email',
-        ),
         migrations.AlterField(
             model_name='coveredbusiness',
             name='logo',
@@ -23,11 +19,6 @@ class Migration(migrations.Migration):
             model_name='coveredbusiness',
             name='logo_thumbnail',
             field=models.ImageField(blank=True, upload_to='company-logos/thumbnails'),
-        ),
-        migrations.AlterField(
-            model_name='coveredbusiness',
-            name='request_email',
-            field=models.EmailField(blank=True, max_length=254),
         ),
         migrations.AlterField(
             model_name='coveredbusiness',

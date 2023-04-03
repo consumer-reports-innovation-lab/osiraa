@@ -6,18 +6,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('covered_business', '0002_coveredbusiness_delete_company'),
+        ('covered_business', '0001_initial'),
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='brand_name',
-            field=models.CharField(blank=True, default='', max_length=63),
-        ),
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='name',
-            field=models.CharField(blank=True, default='', max_length=63),
-        ),
     ]
