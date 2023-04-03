@@ -27,4 +27,5 @@ urlpatterns = [
     path('covered_business/', include('covered_business.urls')),
     path('data_rights_request/', include('data_rights_request.urls')),
     path('reporting/', include('reporting.urls')),
+    path('pip/', include('drp_pip.urls')),
 ]

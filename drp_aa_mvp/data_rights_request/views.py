@@ -1,25 +1,28 @@
+import base64
+import datetime
+import json
+import os
+import re
 from datetime import datetime
-from typing import Tuple
+from typing import Optional, Tuple
+
+import arrow
+import jwt
+import requests
+import validators
+from covered_business.models import CoveredBusiness
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
-
-import requests
-import json
-
 from nacl import signing
-from nacl.public import PrivateKey
 from nacl.encoding import HexEncoder
-
-import os
-import validators
-
-from .models import DataRightsRequest, DataRightsStatus, DrpRequestStatusPair, DrpRequestTransaction, IdentityPayload
+from nacl.public import PrivateKey
+from reporting.views import (test_discovery_endpoint, test_excercise_endpoint,
+                             test_status_endpoint, test_pairwise_key_setup_endpoint)
 from user_identity.models import IdentityUser
-from covered_business.models import CoveredBusiness
-from reporting.views import test_discovery_endpoint, test_pairwise_key_setup_endpoint, test_agent_information_endpoint, test_excercise_endpoint, test_status_endpoint, test_revoked_endpoint
 
-
+from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
+                     DrpRequestTransaction, IdentityPayload)
 
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
@@ -30,14 +33,32 @@ auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.g
 # todo: these keys actually should be generated offline before we start using the app 
 # and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
-signing_key = signing.SigningKey.generate()
-verify_key = signing_key.verify_key
+def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
+    path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
+    if not os.path.exists(path):
+        with open(path, "w") as f:
+           signing_key = signing.SigningKey.generate()
+           verify_key = signing_key.verify_key
+           json.dump({
+               "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
+               "verify_key": verify_key.decode()
+           }, f)
+
+    with open(path, "r") as f:
+        jason = json.load(f)
+        return (signing.SigningKey(jason["signing_key"], encoder=HexEncoder),
+                signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
+    
+ 
+
+signing_key, verify_key = load_pynacl_keys()
+    
 
 # the public key and signing key as b64 strings
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
 verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
 
-selected_covered_biz: CoveredBusiness = None
+selected_covered_biz: Optional[CoveredBusiness] = None
 
 
 def index(request):
@@ -113,7 +134,7 @@ def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
-    request_obj    = create_setup_pairwise_key_request_json(covered_biz_id)
+    request_obj    = create_setup_pairwise_key_request_json(covered_biz.cb_id)
 
     signed_request  = sign_request(signing_key, request_obj)
 
@@ -416,14 +437,14 @@ def sign_request(signing_key, request_obj):
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(minutes=15)
+    issued_time     = arrow.get()
+    expires_time    = issued_time.shift(minutes=15)
 
     request_json = {
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz_id,
-        "expires-at":   expires_time,
-        "issued-at":    issued_time,
+        "expires-at":   str(expires_time),
+        "issued-at":    str(issued_time),
     }
 
     return request_json
@@ -482,7 +503,6 @@ def set_agent_info_params(response):
     except KeyError as e:
         print('**  WARNING - set_agent_info_params(): missing keys **')
         return False
-
 
 #--------------------------------------------------------------------------------------------------#
 
@@ -552,13 +572,16 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     data_rights_status = DataRightsStatus.objects.create(
+        # required fields
         request_id              = response_json['request_id'],
-        received_at             = response_json['received_at'],
-        expected_by             = response_json['expected_by'],
-        processing_details      = response_json['processing_details'],
         status                  = response_json['status'],
-        reason                  = response_json['reason'],
-        user_verification_url   = response_json['user_verification_url'],
+        # optional/possible fields
+        processing_details      = response_json.get('processing_details'),
+        reason                  = response_json.get('reason'),
+        user_verification_url   = response_json.get('user_verification_url'),
+        # these fields need to be coerced to a datetime from arbitrary timestamps
+        received_at             = enrich_date(response_json.get('received_at')),
+        expected_by             = enrich_date(response_json.get('expected_by')),
     )
 
     #  todo: this doesn't seem to work ...
@@ -576,6 +599,20 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     return transaction
+
+
+def enrich_date(dt: Optional[str]):
+    '''
+    arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
+
+    additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
+    '''
+    if dt is None:
+        return None
+    if re.search(r'-[0-9]{4}$', dt):
+        dt = dt[:-5] # sickos.jpg
+
+    return arrow.get(dt).datetime
 
 
 def get_request_id (covered_biz, user_identity):
