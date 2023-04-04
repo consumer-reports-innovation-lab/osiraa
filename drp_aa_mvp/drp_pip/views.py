@@ -136,6 +136,7 @@ def exercise(request: HttpRequest):
     # we now have a dict with the DRP request in it, the message has been
     # authenticated to the key associated with the bearer token!
     data_rights_request = DataRightsRequest.objects.create(
+        aa_id                   = agent.aa_id,
         request_id              = request_id,
         relationships           = message['relationships'],
         status_callback         = message['status_callback'],
@@ -145,6 +146,7 @@ def exercise(request: HttpRequest):
     )
 
     status = dict(
+        aa_id                   = agent.aa_id,
         # required fields
         request_id              = request_id,
         status                  = 'open',
@@ -165,7 +167,31 @@ def exercise(request: HttpRequest):
 
 @csrf_exempt
 def get_status(request, request_id: str):
-    pass
+    bearer_token = validate_auth_header(request)
+    if not bearer_token:
+        logger.error(f"no bearer token")
+        return HttpResponse(status=403)
+
+    agent = AuthorizedAgent.fetch_by_bearer_token(bearer_token)
+    status = DataRightsStatus.objects.get(request_id=request_id)
+
+    if agent.aa_id != status.aa_id:
+        logger.error(f"agent ID didnt match!")
+        return HttpResponse(status=403)
+
+    return JsonResponse(dict(
+        # required fields
+        request_id              = status.request_id,
+        status                  = status.status,
+        # optional/possible fields
+        processing_details      = status.processing_details,
+        reason                  = status.reason,
+        user_verification_url   = status.user_verification_url,
+        # these fields need to be coerced to a datetime from arbitrary timestamps
+        received_at             = status.received_at,
+        expected_by             = status.expected_by,
+    ))
+
 
 def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> dict:
     """Validate the message is coming from the specified agent and

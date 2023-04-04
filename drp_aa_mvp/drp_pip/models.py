@@ -9,9 +9,9 @@ class MessageValidationException(Exception):
 # the OSIRAA side... not sue how that would effect an "internal" end
 # to end test tho right now so just duplicating.
 class DataRightsRequest(drr.DataRightsRequest):
-    pass
+    aa_id                 = models.CharField(max_length=63, blank=True, default='')
 class DataRightsStatus(drr.DataRightsStatus):
-    pass
+    aa_id                 = models.CharField(max_length=63, blank=True, default='')
 
 
 class AuthorizedAgent(models.Model):
