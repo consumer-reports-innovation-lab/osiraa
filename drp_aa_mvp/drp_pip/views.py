@@ -146,7 +146,6 @@ def exercise(request: HttpRequest):
     )
 
     status = dict(
-        aa_id                   = agent.aa_id,
         # required fields
         request_id              = request_id,
         status                  = 'open',
@@ -160,6 +159,7 @@ def exercise(request: HttpRequest):
     )
 
     data_rights_status = DataRightsStatus.objects.create(
+        aa_id                   = agent.aa_id,
         **status
     )
 
