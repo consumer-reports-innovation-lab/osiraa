@@ -1,4 +1,18 @@
 from django.db import models
+import data_rights_request.models as drr
+
+
+class MessageValidationException(Exception):
+    pass
+
+# TKTKTK I should really be thinking hard about just using the one in
+# the OSIRAA side... not sue how that would effect an "internal" end
+# to end test tho right now so just duplicating.
+class DataRightsRequest(drr.DataRightsRequest):
+    pass
+class DataRightsStatus(drr.DataRightsStatus):
+    pass
+
 
 class AuthorizedAgent(models.Model):
     name                  = models.CharField(max_length=63, blank=True, default='')
@@ -21,6 +35,3 @@ class AuthorizedAgent(models.Model):
     @classmethod
     def fetch_by_bearer_token(cls, token: str):
         return cls.objects.get(bearer_token=token)
-
-class MessageValidationException(Exception):
-    pass
