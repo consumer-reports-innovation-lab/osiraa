@@ -1,19 +1,22 @@
 import json
 import os
 import re
+from typing import Optional
+import uuid
 
+import arrow
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse, HttpRequest
-import arrow
-
 from nacl.encoding import HexEncoder
 from nacl.signing import VerifyKey
 from nacl.utils import random
 import nacl.exceptions
 
-from .models import AuthorizedAgent, MessageValidationException
+from .models import (AuthorizedAgent, MessageValidationException,
+                     DataRightsRequest, DataRightsStatus)
+from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
 # TKTKTK cross-module import
 # from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
@@ -114,7 +117,51 @@ def agent_status(request, aa_id: str):
 
 @csrf_exempt
 def exercise(request: HttpRequest):
-    pass
+    bearer_token = validate_auth_header(request)
+    if not bearer_token:
+        return HttpResponse(status=403)
+
+    agent = AuthorizedAgent.fetch_by_bearer_token(bearer_token)
+
+    try:
+        message = validate_message_to_agent(agent, request)
+    except:
+        return HttpResponse(status=403)
+
+    request_id = uuid.uuid4()
+
+    db_right = next(filter(lambda t: { t[1] == message['exercise'] }, ACTION_CHOICES))[0]
+    db_regime = next(filter(lambda t: { t[1] == message['regime'] }, REGIME_CHOICES))[0]
+
+    # we now have a dict with the DRP request in it, the message has been
+    # authenticated to the key associated with the bearer token!
+    data_rights_request = DataRightsRequest.objects.create(
+        request_id              = request_id,
+        relationships           = message['relationships'],
+        status_callback         = message['status_callback'],
+        regime                  = db_regime,
+        exercise                = [db_right],
+        # persist claims...?
+    )
+
+    status = dict(
+        # required fields
+        request_id              = request_id,
+        status                  = 'open',
+        # optional/possible fields
+        # processing_details      = response_json.get('processing_details'),
+        # reason                  = response_json.get('reason'),
+        # user_verification_url   = response_json.get('user_verification_url'),
+        # these fields need to be coerced to a datetime from arbitrary timestamps
+        received_at             = str(arrow.get())
+        # expected_by             = enrich_date(response_json.get('expected_by')),
+    )
+
+    data_rights_status = DataRightsStatus.objects.create(
+        **status
+    )
+
+    return JsonResponse(status)
 
 @csrf_exempt
 def get_status(request, request_id: str):
