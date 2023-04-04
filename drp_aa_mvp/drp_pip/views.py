@@ -77,20 +77,28 @@ def register_agent(request, aa_id: str):
     except:
         return HttpResponse(b"Something went wonky! Token did not persist.", status=500)
 
+def validate_auth_header(request) -> Optional[str]:
+    auth_header = request.headers.get("Authorization")
+    extractor = r"Bearer ([a-zA-Z0-9=+\-_/]+)"
+    matches = re.match(extractor, auth_header)
+    if matches is None:
+        logger.error(f"Auth header did not parse.")
+        logger.error(f"header '{auth_header}'")
+        return None
+
+    return matches.group(1)
+
+
 @csrf_exempt
 def agent_status(request, aa_id: str):
     """
     This method just looks to see that the bearer token is in the DB.
     """
-    auth_header = request.headers.get("Authorization")
-    extractor = r"Bearer ([a-zA-Z0-9=+\-_/]*)"
-    matches = re.match(extractor, auth_header)
-    if matches is None:
-        logger.error(f"Auth header did not parse.")
+    bearer_token = validate_auth_header(request)
+    if not bearer_token:
         return HttpResponse(status=403)
-    btok = matches.group(1)
 
-    agent = AuthorizedAgent.fetch_by_bearer_token(btok)
+    agent = AuthorizedAgent.fetch_by_bearer_token(bearer_token)
 
     if agent.aa_id != aa_id:
         logger.error(f"bearer token did not match expected AA {aa_id}???")
