@@ -1,0 +1,29 @@
+[{
+    "model": "covered_business.coveredbusiness",
+    "pk": 2,
+    "fields": {
+        "name": "osiraa-local",
+        "brand_name": "",
+        "cb_id": "osiraa-local-001",
+        "logo": "",
+        "logo_thumbnail": "",
+        "subtitle_description": "",
+        "discovery_endpoint": "http://localhost:8000/pip/.well-known/data-rights.json",
+        "api_root_endpoint": "http://localhost:8000/pip",
+        "supported_actions": "[\"access\"]",
+        "auth_bearer_token": ""
+    }
+}, {
+    "model": "drp_pip.authorizedagent",
+    "pk": 1,
+    "fields": {
+        "name": "osiraa-local",
+        "brand_name": "",
+        "aa_id": "CR_AA_DRP_ID_001",
+        "logo": "",
+        "logo_thumbnail": "",
+        "subtitle_description": "",
+        "verify_key": "b0409a509cf611a0529ff25df555f692e896eaeb599bfc6e402fa18e523ad7a0",
+        "bearer_token": ""
+    }
+}]
