@@ -3,7 +3,6 @@ import datetime
 import json
 import os
 import re
-from datetime import datetime
 from typing import Optional, Tuple
 
 import arrow
@@ -507,15 +506,15 @@ def set_agent_info_params(response):
 #--------------------------------------------------------------------------------------------------#
 
 def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(days=45)
+    issued_time     = arrow.get()
+    expires_time    = issued_time.shift(days=45)
 
     request_obj = {
         # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
-        "expires-at":   expires_time,
-        "issued-at":    issued_time,
+        "expires-at":   str(expires_time),
+        "issued-at":    str(issued_time),
 
         # 2
         "drp.version": "0.7",
@@ -547,16 +546,15 @@ def create_revoke_request_json(reason):
 
 def create_drp_request_transaction(user_identity, covered_biz, request_json, response_json):
     identity_payload = IdentityPayload.objects.create(
-        issuer                  = request_json.iss,       
-        audience                = request_json.aud,
-        expires_time            = request_json.exp,
-        issued_time             = request_json.iat,
+        issuer                  = request_json.get("agent-id"),
+        audience                = request_json.get("business-id"),
         name                    = user_identity.get_full_name(),
         email                   = user_identity.email,
         email_verified          = user_identity.email_verified,
         phone_number            = user_identity.phone_number,
         phone_number_verified   = user_identity.phone_verified,
-        address                 = user_identity.get_address(),
+        # this needs to get decomposed in to details!
+        # address                 = user_identity.get_address(),
         address_verified        = user_identity.address_verified,
         power_of_attorney       = user_identity.power_of_attorney,
     )
@@ -567,7 +565,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         relationships           = request_json['relationships'],
         status_callback         = request_json['status_callback'],
         regime                  = request_json['regime'],
-        exercise                = request_json['exercise'],
+        exercise                = [request_json['exercise']],
         #identity                = request_json['identity'],
     )
 
@@ -582,6 +580,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         # these fields need to be coerced to a datetime from arbitrary timestamps
         received_at             = enrich_date(response_json.get('received_at')),
         expected_by             = enrich_date(response_json.get('expected_by')),
+        # expires_at?
     )
 
     #  todo: this doesn't seem to work ...
