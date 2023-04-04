@@ -105,12 +105,11 @@ def agent_status(request, aa_id: str):
 
 
 @csrf_exempt
-def validate_pynacl(request):
+def exercise(request: HttpRequest):
     pass
 
-
 @csrf_exempt
-def request_handler(request, request_id: str):
+def get_status(request, request_id: str):
     pass
 
 def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> dict:
