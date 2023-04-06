@@ -3,8 +3,8 @@ Description=github.com/consumer-reports-digital-lab/osiraa
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/docker compose up
-WorkingDirectory=/home/ubuntu/osiraa
+ExecStart=/usr/bin/docker compose -f docker-compose.yml -f docker-compose.prod.yml up
+WorkingDirectory={{osiraa_remote_dir}}
 ExecStop=/usr/bin/docker compose down
 
 [Install]

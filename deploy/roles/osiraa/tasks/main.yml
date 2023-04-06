@@ -1,8 +1,14 @@
 ---
+- debug: msg="{{osiraa_service_id}} on {{osiraa_port}}"
+- name: host directory exists
+  file:
+    state: directory
+    path: '{{osiraa_remote_dir}}'
+    
 - name: copy local osiraa checkout to instance host
   synchronize:
-    src: '{{playbook_dir}}/../'
-    dest: /home/ubuntu/osiraa/
+    src: '{{osiraa_source_dir}}/'
+    dest: '{{osiraa_remote_dir}}/'
   register: copy_osiraa
 
 # TODO: install an environment file with secrets, override settings.py SECURITY WARNINGs
@@ -10,25 +16,25 @@
 - name: docker compose build osiraa
   shell: docker compose build
   args:
-    chdir: /home/ubuntu/osiraa/
+    chdir: '{{osiraa_remote_dir}}'
   when: copy_osiraa.changed
 
 - name: install osiraa systemd service
-  copy:
+  template:
     src: osiraa.service
-    dest: /home/ubuntu/.config/systemd/user/osiraa.service
+    dest: /home/ubuntu/.config/systemd/user/{{osiraa_service_id}}.service
   register: osiraa_service_file
 
 - name: enable osiraa systemd service "by default"
   systemd:
-    name: osiraa
+    name: "{{osiraa_service_id}}"
     scope: user
     enabled: yes
     daemon_reload: yes
 
 - name: restart osiraa if there were changes
   systemd:
-    name: osiraa
+    name: "{{osiraa_service_id}}"
     scope: user
     state: restarted
   when: osiraa_service_file.changed or copy_osiraa.changed
@@ -37,4 +43,33 @@
   wait_for:
     port: '{{item}}'
   with_items:
-    - 8000
+    - '{{osiraa_port}}'
+
+- name: install nginx site
+  become: yes
+  template:
+    src: nginx.site.conf
+    dest: /etc/nginx/sites-available/{{osiraa_service_domain}}.conf
+  notify: "reload nginx"
+
+- name: install nginx site
+  become: yes
+  file:
+    src: /etc/nginx/sites-available/{{osiraa_service_domain}}.conf
+    dest: /etc/nginx/sites-enabled/{{osiraa_service_domain}}.conf
+    state: link
+  notify: "reload nginx"
+
+- name: default host is gone
+  become: yes
+  file:
+    state: absent
+    path: /etc/nginx/sites-available/default
+  notify: "reload nginx"
+
+- name: default host is gone
+  become: yes
+  file:
+    state: absent
+    path: /etc/nginx/sites-enabled/default
+  notify: "reload nginx"

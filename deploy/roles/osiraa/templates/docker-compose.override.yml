@@ -1,0 +1,4 @@
+services:
+  web:
+    ports:
+      - "{{osiraa_port}}:8000"

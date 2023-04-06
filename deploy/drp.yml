@@ -7,8 +7,24 @@
     become: yes
   - role: fidesdemo
     become: no
+
   - role: osiraa
     become: no
+    vars: 
+      osiraa_source_dir: '{{playbook_dir}}/../'
+      osiraa_remote_dir: /home/ubuntu/osiraa
+      osiraa_service_id: osiraa
+      osiraa_service_domain: osiraa.datarightsprotocol.org
+      osiraa_port: 8000
+
+  - role: osiraa
+    become: no
+    vars:
+      osiraa_source_dir: "~/Code/osiraa05"
+      osiraa_remote_dir: "/home/ubuntu/osiraa05"
+      osiraa_service_id: "osiraa05"
+      osiraa_service_domain: "osiraa05.datarightsprotocol.org"
+      osiraa_port: 8001
 
   pre_tasks:
   - name: install SSH keys
