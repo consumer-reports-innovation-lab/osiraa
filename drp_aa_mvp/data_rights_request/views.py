@@ -3,7 +3,6 @@ import datetime
 import json
 import os
 import re
-from datetime import datetime
 from typing import Optional, Tuple
 
 import arrow
@@ -28,9 +27,9 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 #print (f"****  root_url = {root_utl}")
 
 auth_agent_drp_id       = 'CR_AA_DRP_ID_001'
-auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status" 
+auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
-# todo: these keys actually should be generated offline before we start using the app 
+# todo: these keys actually should be generated offline before we start using the app
 # and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
@@ -41,18 +40,18 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
            verify_key = signing_key.verify_key
            json.dump({
                "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
-               "verify_key": verify_key.decode()
+               "verify_key": verify_key.encode(encoder=HexEncoder).decode()
            }, f)
 
     with open(path, "r") as f:
         jason = json.load(f)
         return (signing.SigningKey(jason["signing_key"], encoder=HexEncoder),
                 signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
-    
- 
+
+
 
 signing_key, verify_key = load_pynacl_keys()
-    
+
 
 # the public key and signing key as b64 strings
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
@@ -66,9 +65,9 @@ def index(request):
     covered_businesses  = CoveredBusiness.objects.all()
     request_actions     = get_request_actions_form_display(selected_covered_biz)
 
-    context = { 
-        'user_identities':      user_identities, 
-        'covered_businesses':   covered_businesses, 
+    context = {
+        'user_identities':      user_identities,
+        'covered_businesses':   covered_businesses,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
@@ -84,9 +83,9 @@ def select_covered_business(request):
     covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
     request_actions             = get_request_actions_form_display(selected_covered_biz)
 
-    context = { 
-        'user_identities':      user_identities, 
-        'covered_businesses':   covered_biz_form_display, 
+    context = {
+        'user_identities':      user_identities,
+        'covered_businesses':   covered_biz_form_display,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
@@ -104,24 +103,24 @@ def send_request_discover_data_rights(request):
         unauthed_response = get_well_known(request_url)
         response = get_well_known(request_url, bearer_token)
         set_covered_biz_well_known_params(covered_biz, response)
-        
+
         discover_test_results = test_discovery_endpoint(request_url, {
             'unauthed': unauthed_response,
             'authed': response
         })
 
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     discover_test_results,
         }
 
-    else:  
-        request_sent_context = { 
+    else:
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /discover, no response',
             'response_payload': '',
             'test_results':     [],
@@ -143,18 +142,18 @@ def setup_pairwise_key(request):
         pairwise_setup_test_results = test_pairwise_key_setup_endpoint(request_obj, response)
         set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key)
 
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     pairwise_setup_test_results,
         }
 
-    else:  
-        request_sent_context = { 
+    else:
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -168,25 +167,25 @@ def get_agent_information(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
-    bearer_token    = covered_biz.auth_bearer_token or ""   
+    bearer_token    = covered_biz.auth_bearer_token or ""
 
     if (validators.url(request_url)):
         response = get_agent(request_url, bearer_token)
         agent_info_test_results = test_agent_information_endpoint(request_url, response)
         set_agent_info_params(covered_biz, response)
 
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     agent_info_test_results,
         }
 
-    else:  
-        request_sent_context = { 
+    else:
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -210,10 +209,10 @@ def send_request_excercise_rights(request):
     # todo: a missing param in the request_jwt could cause trouble ...
     #print('**  send_request_excercise_rights(): request_action = ' + request_action)
 
-    request_json    = create_excercise_request_json(user_identity, covered_biz, 
+    request_json    = create_excercise_request_json(user_identity, covered_biz,
                                                     request_action, covered_regime)
-    
-    signed_request  = sign_request(covered_biz.signing_key, request_json)
+
+    signed_request  = sign_request(signing_key, request_json)
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -221,9 +220,9 @@ def send_request_excercise_rights(request):
         try:
             json.loads(response.text)
         except ValueError as e:
-            request_sent_context = { 
+            request_sent_context = {
                 'covered_biz':      covered_biz,
-                'request_url':      request_url, 
+                'request_url':      request_url,
                 'response_code':    response.status_code,
                 'response_payload': 'invalid json in response for /v1/data-right-request/',
                 'test_results':     [],
@@ -234,23 +233,23 @@ def send_request_excercise_rights(request):
         response_json = response.json()
 
         if ('request_id' in response_json):
-            data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,  
+            data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,
                                                             covered_biz, request_json, response_json)
-        
+
         excercise_test_results = test_excercise_endpoint(request_json, response)
 
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    response.status_code,
             'response_payload': response.text,
-            'test_results':     excercise_test_results 
+            'test_results':     excercise_test_results
         }
 
     else:
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /excecise , no response',
             'response_payload': '',
             'test_results':     [],
@@ -278,18 +277,18 @@ def send_request_get_status(request):
 
         status_test_results = test_status_endpoint(request_url, response)
 
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url': response.request.url, 
+            'request_url': response.request.url,
             'response_code': response.status_code,
             'response_payload': response.text,
-            'test_results': status_test_results 
+            'test_results': status_test_results
         }
 
     else:
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /status , no response',
             'response_payload': '',
             'test_results':     [],
@@ -308,28 +307,28 @@ def send_request_revoke(request):
 
     request_url     =  "/v1/data-rights-request/" + request_id
     request_json    = create_revoke_request_json(reason)
-    
+
     signed_request  = sign_request(covered_biz.signing_key, request_json)
 
-    if (validators.url(request_url)):  
+    if (validators.url(request_url)):
         response = post_revoke(request_url, bearer_token, signed_request)
 
         # todo: log request to DB, stop status ping ...
 
         test_revoked_endpoint(request_url, response)
-        
-        context = { 
+
+        context = {
             'covered_biz':      covered_biz,
-            'request_url':      response.request.url, 
+            'request_url':      response.request.url,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     [],
         }
 
     else:
-        request_sent_context = { 
+        request_sent_context = {
             'covered_biz':      covered_biz,
-            'request_url':      request_url, 
+            'request_url':      request_url,
             'response_code':    'invalid url for /revoke , no response',
             'response_payload': '',
             'test_results':     [],
@@ -346,9 +345,9 @@ def data_rights_request_sent_return(request):
     covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
     request_actions             = get_request_actions_form_display(selected_covered_biz)
 
-    context = { 
-        'user_identities':      user_identities, 
-        'covered_businesses':   covered_biz_form_display, 
+    context = {
+        'user_identities':      user_identities,
+        'covered_businesses':   covered_biz_form_display,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
@@ -363,8 +362,8 @@ def set_covered_biz_well_known_params(covered_biz, response):
         json.loads(response.text)
     except ValueError as e:
         print('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
-        return False  
-          
+        return False
+
     try:
         reponse_json = response.json()
         covered_biz.api_root = reponse_json['api_base']
@@ -388,8 +387,8 @@ def get_covered_biz_form_display(covered_businesses, selected_biz):
             'selected': 'selected' if (covered_biz.id == selected_biz.id) else ''
         })
 
-    return covered_businesses_form_display 
-    
+    return covered_businesses_form_display
+
 
 def covered_biz_has_supported_action(covered_biz, action):
     if action in covered_biz.supported_actions:
@@ -399,7 +398,7 @@ def covered_biz_has_supported_action(covered_biz, action):
 
 
 def get_request_actions_form_display (covered_biz):
-    if (covered_biz is None):  
+    if (covered_biz is None):
         request_actions = [
             { 'action': 'sale:opt-out', 'label': 'Sale - Opt Out', 'disabled': 'disabled' },
             { 'action': 'sale:opt_in', 'label': 'Sale - Opt In', 'disabled': 'disabled' },
@@ -411,17 +410,17 @@ def get_request_actions_form_display (covered_biz):
 
     else:
         request_actions = [
-            { 'action': 'sale:opt-out', 'label': 'Sale - Opt Out', 
+            { 'action': 'sale:opt-out', 'label': 'Sale - Opt Out',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'sale:opt-out') },
-            { 'action': 'sale:opt_in', 'label': 'Sale - Opt In', 
+            { 'action': 'sale:opt_in', 'label': 'Sale - Opt In',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'sale:opt-in') },
-            { 'action': 'access', 'label': 'Access (View) User Data', 
+            { 'action': 'access', 'label': 'Access (View) User Data',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'access') },
-            { 'action': 'deletion', 'label': 'Delete User Data', 
+            { 'action': 'deletion', 'label': 'Delete User Data',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'deletion') },
-            { 'action': 'access:categories', 'label': 'Access User Data - Categories', 
+            { 'action': 'access:categories', 'label': 'Access User Data - Categories',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'access:categories') },
-            { 'action': 'access:specific', 'label': 'Access User Data - Specific', 
+            { 'action': 'access:specific', 'label': 'Access User Data - Specific',
                 'disabled': covered_biz_has_supported_action(covered_biz, 'access:specific') },
         ]
 
@@ -455,8 +454,8 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
         json.loads(response.text)
     except ValueError as e:
         print('**  WARNING - set_covered_biz_pairwise_key_params(): NOT valid json  **')
-        return False  
-          
+        return False
+
     try:
         response_json = response.json()
 
@@ -472,29 +471,29 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
     except KeyError as e:
         print('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
         return False
-    
+
 
 def create_agent_key_setup_json(agent_id, business_id):
     issued_time     = datetime.datetime.now()
     expires_time    = issued_time + datetime.timedelta(min=15)  # 15 minutes from now
-   
+
     agent_key_setup_json = {
         "agent-id": agent_id,
         "business-id": business_id,
-        "expires-at": expires_time,  
+        "expires-at": expires_time,
         "issued-at": issued_time
     }
-     
+
     return agent_key_setup_json
-   
+
 
 def set_agent_info_params(response):
     try:
         json.loads(response.text)
     except ValueError as e:
         print('**  WARNING - set_agent_info_params(): NOT valid json  **')
-        return False  
-            
+        return False
+
     try:
         reponse_json = response.json()  # should be empty json "{ }"
 
@@ -507,27 +506,27 @@ def set_agent_info_params(response):
 #--------------------------------------------------------------------------------------------------#
 
 def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(days=45)
+    issued_time     = arrow.get()
+    expires_time    = issued_time.shift(days=45)
 
     request_obj = {
         # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
-        "expires-at":   expires_time,
-        "issued-at":    issued_time,
+        "expires-at":   str(expires_time),
+        "issued-at":    str(issued_time),
 
         # 2
         "drp.version": "0.7",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
-        "status_callback": auth_agent_callback_url,           
-        
+        "status_callback": auth_agent_callback_url,
+
         # 3
         # claims in IANA JSON Web Token Claims page, see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
-        "name": (user_identity.last_name + ", " + user_identity.first_name),     
-        "email": user_identity.email,      
+        "name": (user_identity.last_name + ", " + user_identity.first_name),
+        "email": user_identity.email,
         "phone_number": user_identity.phone_number,
         "address": user_identity.get_address(),
     }
@@ -547,16 +546,15 @@ def create_revoke_request_json(reason):
 
 def create_drp_request_transaction(user_identity, covered_biz, request_json, response_json):
     identity_payload = IdentityPayload.objects.create(
-        issuer                  = request_json.iss,       
-        audience                = request_json.aud,
-        expires_time            = request_json.exp,
-        issued_time             = request_json.iat,
+        issuer                  = request_json.get("agent-id"),
+        audience                = request_json.get("business-id"),
         name                    = user_identity.get_full_name(),
         email                   = user_identity.email,
         email_verified          = user_identity.email_verified,
         phone_number            = user_identity.phone_number,
         phone_number_verified   = user_identity.phone_verified,
-        address                 = user_identity.get_address(),
+        # this needs to get decomposed in to details!
+        # address                 = user_identity.get_address(),
         address_verified        = user_identity.address_verified,
         power_of_attorney       = user_identity.power_of_attorney,
     )
@@ -567,7 +565,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         relationships           = request_json['relationships'],
         status_callback         = request_json['status_callback'],
         regime                  = request_json['regime'],
-        exercise                = request_json['exercise'],
+        right                   = request_json['exercise'],
         #identity                = request_json['identity'],
     )
 
@@ -582,17 +580,18 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         # these fields need to be coerced to a datetime from arbitrary timestamps
         received_at             = enrich_date(response_json.get('received_at')),
         expected_by             = enrich_date(response_json.get('expected_by')),
+        # expires_at?
     )
 
     #  todo: this doesn't seem to work ...
     #excercise_request = DrpRequestStatusPair.create(data_rights_request.id, data_rights_status.id)
 
     transaction = DrpRequestTransaction.objects.create(
-        user_ref                = user_identity, 
+        user_ref                = user_identity,
         company_ref             = covered_biz,
         request_id              = data_rights_status.request_id,
         current_status          = data_rights_status.status,
-        expires_date            = data_rights_status.expires_date,  
+        # expires_date            = data_rights_status.expires_date,
 
         is_final                = False,
         #excer_request           = excercise_request
@@ -639,7 +638,7 @@ def get_well_known(discovery_url, bearer_token=""):
     return response
 
 
-#POST /v1/data-right-request/ 
+#POST /v1/data-right-request/
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {'Authorization': f"Bearer {bearer_token}"}
     response = requests.post(request_url, headers=request_headers, data=signed_request)
@@ -677,4 +676,3 @@ def get_agent(request_url, bearer_token):
     response = requests.get(request_url, headers=request_headers)
 
     return response
-

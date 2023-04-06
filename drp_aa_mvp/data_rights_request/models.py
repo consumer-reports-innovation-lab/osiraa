@@ -166,8 +166,11 @@ class DataRightsRequest(models.Model):
     relationships       = ArrayField(models.CharField(max_length=31),  default=list)
     status_callback     = models.URLField(max_length=1023, blank=True, default='')
     regime              = models.CharField(max_length=31, choices=REGIME_CHOICES, default=CCPA)
-    exercise            = ArrayField(models.CharField(max_length=31, choices=ACTION_CHOICES), default=list)
+    right               = models.CharField(max_length=31, choices=ACTION_CHOICES, default=None)
     identity            = models.ForeignKey(IdentityPayload, null=True, on_delete=models.CASCADE)  
+
+    def __str__(self):
+        return f"{self.request_id} asking {self.exercise} for {self.identity}"
 
 
 class DataRightsStatus(models.Model):
@@ -179,6 +182,9 @@ class DataRightsStatus(models.Model):
     status                  = models.TextField(max_length=31, blank=True, default='', choices=STATUS_CHOICES)
     reason                  = models.TextField(max_length=31, null=True, blank=True, default='', choices=REASON_CHOICES)
     user_verification_url   = models.URLField(max_length=127, null=True, blank=True, default='')
+
+    def __str__(self):
+        return f"{self.request_id} received_at {self.received_at} status {self.status}"
   
 """
 - request 

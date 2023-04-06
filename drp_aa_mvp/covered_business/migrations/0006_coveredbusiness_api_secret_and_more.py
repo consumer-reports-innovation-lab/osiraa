@@ -10,14 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='api_secret',
-            field=models.CharField(blank=True, default='', max_length=127),
-        ),
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='auth_bearer_token',
-            field=models.CharField(blank=True, default='', max_length=1023),
-        ),
     ]

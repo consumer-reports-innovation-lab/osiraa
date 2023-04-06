@@ -11,9 +11,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='coveredbusiness',
-            name='supported_actions',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=31), default=list, size=None),
-        ),
     ]
