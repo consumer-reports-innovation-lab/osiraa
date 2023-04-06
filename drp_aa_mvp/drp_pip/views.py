@@ -141,7 +141,7 @@ def exercise(request: HttpRequest):
         relationships           = message['relationships'],
         status_callback         = message['status_callback'],
         regime                  = db_regime,
-        exercise                = [db_right],
+        right                   = db_right,
         # persist claims...?
     )
 

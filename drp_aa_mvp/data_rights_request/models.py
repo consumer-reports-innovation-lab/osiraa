@@ -166,7 +166,7 @@ class DataRightsRequest(models.Model):
     relationships       = ArrayField(models.CharField(max_length=31),  default=list)
     status_callback     = models.URLField(max_length=1023, blank=True, default='')
     regime              = models.CharField(max_length=31, choices=REGIME_CHOICES, default=CCPA)
-    exercise            = ArrayField(models.CharField(max_length=31, choices=ACTION_CHOICES), default=list)
+    right               = models.CharField(max_length=31, choices=ACTION_CHOICES, default=None)
     identity            = models.ForeignKey(IdentityPayload, null=True, on_delete=models.CASCADE)  
 
     def __str__(self):

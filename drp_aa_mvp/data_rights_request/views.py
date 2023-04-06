@@ -565,7 +565,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         relationships           = request_json['relationships'],
         status_callback         = request_json['status_callback'],
         regime                  = request_json['regime'],
-        exercise                = [request_json['exercise']],
+        right                   = request_json['exercise'],
         #identity                = request_json['identity'],
     )
 
