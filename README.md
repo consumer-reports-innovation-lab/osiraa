@@ -99,7 +99,7 @@ See the app in the browser:
 "Simply" install [docker-compose](https://docs.docker.com/compose/) run these commands:
 
 ```
-docker-compose up --build -d
+docker-compose up -f docker-compose.yml -f docker-compose.override.yml --build -d
 docker-compose run -it web /usr/local/bin/python /code/manage.py createsuperuser
 ```
 

@@ -1,0 +1,7 @@
+services:
+  web:
+    ports:
+      - "8000:8000"
+  db:
+    ports:
+      - "15432:5432"
