@@ -1,6 +1,7 @@
-[{
+[
+{
     "model": "covered_business.coveredbusiness",
-    "pk": 2,
+    "pk": 3,
     "fields": {
         "name": "osiraa-local",
         "brand_name": "",
@@ -10,10 +11,11 @@
         "subtitle_description": "",
         "discovery_endpoint": "http://localhost:8000/pip/.well-known/data-rights.json",
         "api_root_endpoint": "http://localhost:8000/pip",
-        "supported_actions": "[\"access\"]",
-        "auth_bearer_token": ""
+        "supported_actions": "[\"sale:opt-out\", \"sale:opt-in\", \"access\", \"deletion\"]",
+        "auth_bearer_token": "_"
     }
-}, {
+},
+{
     "model": "drp_pip.authorizedagent",
     "pk": 1,
     "fields": {
@@ -26,4 +28,25 @@
         "verify_key": "b0409a509cf611a0529ff25df555f692e896eaeb599bfc6e402fa18e523ad7a0",
         "bearer_token": ""
     }
-}]
+},
+{
+    "model": "user_identity.identityuser",
+    "pk": 1,
+    "fields": {
+        "first_name": "John",
+        "last_name": "Random",
+        "email": "jrandom1980@gmail.com",
+        "email_verified": true,
+        "phone_number": "",
+        "phone_verified": false,
+        "city": "",
+        "country": "",
+        "address1": "",
+        "address2": "",
+        "state_province": "",
+        "zip_postal": "",
+        "address_verified": false,
+        "power_of_attorney": false
+    }
+}
+]
