@@ -23,6 +23,8 @@ Some calls require additional parameters such as a User or Covered Regime.  Thes
 
 Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the response is valid json, it tests for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.
 
+## Test an Authorized Agent implementation
+OSIRAA also contains a minimalist Privacy Infrastructure Provider API running at https://osiraa.datarightsprotocol.org/pip . Authorized Agents can be registered in the Django administration panel to test compliance with the Data Rights Protocol. The code in the [DRP PIP](https://github.com/consumer-reports-innovation-lab/osiraa/tree/main/drp_aa_mvp/drp_pip) Django app can also be used as a reference implementation for Privacy Infrastructure Providers implementing the protocol. 
 
 ## Versions
   - Python 3.9.6
