@@ -9,6 +9,7 @@
   synchronize:
     src: '{{osiraa_source_dir}}/'
     dest: '{{osiraa_remote_dir}}/'
+    delete: yes
   register: copy_osiraa
 
 # TODO: install an environment file with secrets, override settings.py SECURITY WARNINGs
