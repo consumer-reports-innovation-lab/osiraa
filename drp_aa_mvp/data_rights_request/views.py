@@ -172,7 +172,7 @@ def get_agent_information(request):
     if (validators.url(request_url)):
         response = get_agent(request_url, bearer_token)
         agent_info_test_results = test_agent_information_endpoint(request_url, response)
-        set_agent_info_params(covered_biz, response)
+        # set_agent_info_params(covered_biz)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
