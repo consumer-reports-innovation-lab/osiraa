@@ -16,7 +16,7 @@ from django.shortcuts import render
 from nacl import signing
 from nacl.encoding import HexEncoder
 from nacl.public import PrivateKey
-from reporting.views import (test_discovery_endpoint, test_excercise_endpoint,
+from reporting.views import (test_agent_information_endpoint, test_discovery_endpoint, test_excercise_endpoint,
                              test_status_endpoint, test_pairwise_key_setup_endpoint)
 from user_identity.models import IdentityUser
 
