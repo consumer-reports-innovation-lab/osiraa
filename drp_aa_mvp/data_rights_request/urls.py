@@ -9,6 +9,10 @@ urlpatterns = [
 
     path('select_covered_business', views.select_covered_business, name='select_covered_business'),
 
+    path('setup_pairwise_key', views.setup_pairwise_key, name='setup_pairwise_key'),
+
+    path('get_agent_information', views.get_agent_information, name='get_agent_information'),
+
     path('send_request_discover_data_rights', views.send_request_discover_data_rights, 
         name='send_request_discover_data_rights'),
 
@@ -19,8 +23,6 @@ urlpatterns = [
         name='send_request_get_status'),
 
     path('send_request_revoke', views.send_request_revoke, name='send_request_revoke'),
-
-    #path('request_sent', views.request_sent, name='request_sent'),
 
     path('data_rights_request_sent_return', views.data_rights_request_sent_return, 
          name='data_rights_request_sent_return'),
