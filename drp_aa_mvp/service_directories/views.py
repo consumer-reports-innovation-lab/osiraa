@@ -49,7 +49,7 @@ def aas_list(aa_list: List[AuthorizedAgent]):
     
 
 @csrf_exempt
-def business_directory():
+def business_directory(request):
     return JsonResponse(
         cbs_list(CoveredBusiness.objects.all()),
         # TypeError: In order to allow non-dict objects to be serialized set the safe parameter to False.
@@ -58,8 +58,7 @@ def business_directory():
 
 
 @csrf_exempt
-def agent_directory():
-
+def agent_directory(request):
     return JsonResponse(
         aas_list(AuthorizedAgent.objects.all()),
         # TypeError: In order to allow non-dict objects to be serialized set the safe parameter to False.
