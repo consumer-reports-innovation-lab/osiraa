@@ -28,4 +28,5 @@ urlpatterns = [
     path('data_rights_request/', include('data_rights_request.urls')),
     path('reporting/', include('reporting.urls')),
     path('pip/', include('drp_pip.urls')),
+    path('directories/', include('service_directories.urls')),
 ]
