@@ -7,6 +7,7 @@
 env/
 __pycache__/
 staticfiles/
+static
 
 ## pynacl keys' dev location!
 keys.json
