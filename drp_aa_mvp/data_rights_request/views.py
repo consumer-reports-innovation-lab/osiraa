@@ -26,7 +26,7 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
 
-auth_agent_drp_id       = 'CR_AA_DRP_ID_001'
+auth_agent_drp_id       = os.environ.get("DRP_AA_ID", 'CR_AA_DRP_ID_001')
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
 # todo: these keys actually should be generated offline before we start using the app
