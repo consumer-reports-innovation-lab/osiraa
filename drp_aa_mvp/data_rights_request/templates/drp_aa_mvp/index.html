@@ -11,6 +11,9 @@ OSIRAA (Open Source Implementer's Reference Authorized Agent) is test suite desi
 A user may model a PIP or Covered Business in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser in the usual way before you can administer data configurations.  For version 0.7, a Covered Business requires a Discovery Endpoint, and Auth Bearer Token, to be supplied by the PIP/CB partner.  NOTE:  The previously required API Secret has been depricated.  The Authorized Agent will be using a public/private key instead of shared api secret.
 </p>
 
+<p> The official instance of OSIRAA on <a href="https://osiraa.datarightsprotocol.org">osiraa.datarightsprotocol.org</a> is adminstered by Ryan Rix and John Szinger, contact one of them if you'd like to be registered as an Authorized Agent or Privacy Infrastructure Provider.
+</p>
+
 <p><a href="/reporting/"><b>Cert Tests Definitions</b></a><br/>
 The Digital Rights Protocol is centered on a set of API calls between an Authorized Agent and a PIP or Covered Business, on behalf of a User exercising his or her digital rights.</p>
 
@@ -18,3 +21,14 @@ The Digital Rights Protocol is centered on a set of API calls between an Authori
 First select a PIP or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  Discover, Exercise and Status.  Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool.</p>  
 
 <p>Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the the response is valid json, it test for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.</p>
+
+<p><a href="/directories/"><b>View the Authorized Agents and Privacy Infrastructure Providers which OSIRAA knows about</b></a><br/>
+The final version of the service directory will likely be managed outside of OSIRAA but a version is provided here to enable design and testing of the Service Directory model we willb e working on between 0.8 and 1.0 release of the DRP. Here you can see machine-legible versions of the directories as well as human-legible tables. New entries must be created in the Admin Tool unless you are running a local OSIRAA which can then pull the directories with the page below:
+</p>
+
+<p><a href="/pip/"><b>Test your Authorized Agent against an MVP PIP</b></a><br/>
+You'll find a functional Privacy Infrastructure Provider running with the <code>api_base</code> of <!-- TODO: server_name... --><a href="/pip"><code>SERVER_NAME/pip/</code></a> which can be used to validate your Authorized Agent implementation against the 0.7 spec. Note that you will have to provide your <code>verify_key</code> and some other details to the server admin tool, or pull from production OSIRAA if you are running a self-hosted instance. There is currently no reporting interface for this functionality, though we will eventually add a web-form version of the <code>Data Rights Status</code> endpoint. Request states can be updated via the Admin Tool.
+</p>
+
+<p>The MVP PIP has a <a href="/pip">small page</a> to update the local version of the Authorized Agent directory from the "official" OSIRAA instance if you are running a local instance.
+</p>
