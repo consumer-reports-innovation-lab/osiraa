@@ -15,15 +15,20 @@ class DataRightsStatus(drr.DataRightsStatus):
 
 
 class AuthorizedAgent(models.Model):
-    name                  = models.CharField(max_length=63, blank=True, default='')
-    brand_name            = models.CharField(max_length=63, blank=True, default='')
-    aa_id                 = models.CharField(max_length=63, blank=True, default='')
-    logo                  = models.ImageField('Logo Image', upload_to='company-logos', blank=True)
-    logo_thumbnail        = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
-    subtitle_description  = models.TextField(blank=True)
+    name                   = models.CharField(max_length=63, blank=True, default='')
+    brand_name             = models.CharField(max_length=63, blank=True, default='')
+    aa_id                  = models.CharField(max_length=63, blank=True, default='')
+    logo                   = models.ImageField('Logo Image', upload_to='company-logos', blank=True)
+    logo_thumbnail         = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
+    subtitle_description   = models.TextField(blank=True)
 
-    verify_key            = models.TextField('Hex encoded key to verify signed requests')
-    bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
+    verify_key             = models.TextField('Hex encoded key to verify signed requests')
+    bearer_token           = models.TextField('pair-wise token between AA and CB', blank=True)
+
+    web_url                = models.TextField("Authorized Agent's home page", blank=True)
+    identity_assurance_url = models.TextField("Link to document describing the Agent's identity assurance standards", blank=True)
+    technical_contact      = models.TextField("Email address to contact for technical issues", blank=True)
+    business_contact       = models.TextField("Email address to contact for business/legal communiques", blank=True)
 
     def __str__(self):
         return self.name

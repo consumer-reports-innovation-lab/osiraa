@@ -37,6 +37,10 @@ class CoveredBusiness(models.Model):
     supported_actions     = ArrayField(models.CharField(max_length=31, choices=SUPPORTED_ACTION_CHOICES),  default=list)
     auth_bearer_token     = models.CharField(max_length=4096, blank=True, default='')
 
+    web_url                = models.TextField("Business's home page", blank=True)
+    technical_contact      = models.TextField("Email address to contact for technical issues", blank=True)
+    business_contact       = models.TextField("Email address to contact for business/legal communiques", blank=True)
+
     #list_of_rights
     #user_business_relationship
 
