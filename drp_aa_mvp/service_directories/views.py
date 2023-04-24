@@ -26,9 +26,10 @@ def cbs_list(cb_list: List[CoveredBusiness]):
             logo=cb.logo.url if cb.logo else None,
             api_base=cb.api_root_endpoint,
             supported_actions=cb.supported_actions,
-            web_url="https://example.com/fixme",
-            technical_contact="privacy-eng@example.com",
-            business_contact="privacy-legal@example.com",
+
+            web_url=cb.web_url,
+            technical_contact=cb.technical_contact,
+            business_contact=cb.business_contact,
         )
     return [ cb_to_dict(cb) for cb in cb_list ]
 
@@ -40,10 +41,11 @@ def aas_list(aa_list: List[AuthorizedAgent]):
             name=aa.brand_name,
             logo=aa.logo.url if aa.logo else None,
             verify_key=aa.verify_key,
-            web_url="https://example.com/fixme",
-            identity_assurance_url="https://example.com/fixme",
-            technical_contact="drp-tech@example.com",
-            business_contact="drp@example.com",
+
+            web_url=aa.web_url,
+            identity_assurance_url=aa.identity_assurance_url,
+            technical_contact=aa.technical_contact,
+            business_contact=aa.business_contact,
         )
     return [ aa_to_dict(aa) for aa in aa_list ]
     

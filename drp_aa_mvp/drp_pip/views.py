@@ -67,10 +67,10 @@ def update_directory(request):
         model_obj.logo = agent.get('logo')
 
         # TODO: add to model
-        # model_obj.web_url = agent.get('web_url')
-        # model_obj.technical_contact = agent.get('technical_contact')
-        # model_obj.business_contact = agent.get('business_contact')
-        # model_obj.identity_assurance_url = agent.get('identity_assurance_url')
+        model_obj.web_url = agent.get('web_url')
+        model_obj.technical_contact = agent.get('technical_contact')
+        model_obj.business_contact = agent.get('business_contact')
+        model_obj.identity_assurance_url = agent.get('identity_assurance_url')
 
         model_obj.save()
 
