@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 
 import arrow
-from django.shortcuts import render
+from django.shortcuts import HttpResponseRedirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse, HttpRequest
@@ -13,6 +13,7 @@ from nacl.encoding import HexEncoder
 from nacl.signing import VerifyKey
 from nacl.utils import random
 import nacl.exceptions
+import requests
 
 from .models import (AuthorizedAgent, MessageValidationException,
                      DataRightsRequest, DataRightsStatus)
@@ -25,6 +26,57 @@ import logging
 logger = logging.getLogger(__name__)
 
 OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
+
+
+def index(request):
+    # TODO: this is fine for now but eventually we want make this dynamic?
+    ctx = {
+        'directory_url': "https://osiraa.datarightsprotocol.org/directories/agents",
+    }
+    return render(request, 'drp_pip/index.html', ctx)
+
+
+
+def update_directory(request):
+    """
+    POST with directory_url=url_to_directory to fetch that
+    directory and update the internal OSIRAA PIP models, creating new
+    agents where possible.
+
+    this does NOT handle removed entities and should not be considered
+    sufficient logic -- directory will probably have active/inactive
+    boolean field or valid-between datetimes
+    """
+    directory_url = request.POST.get("directory_url")
+
+    dir_response = requests.get(directory_url)
+    if not dir_response.ok:
+        return HttpResponse(status=500, content=f"not ok fetching {directory_url}: {dir_response.status_code}".encode("utf-8"))
+
+    directory = dir_response.json()
+
+    for agent in directory:
+        try:
+            model_obj = AuthorizedAgent.objects.get(aa_id=agent.get('id'))
+        except AuthorizedAgent.DoesNotExist:
+            model_obj = AuthorizedAgent(aa_id=agent.get('id'))
+
+        model_obj.name = agent['name']
+        model_obj.verify_key = agent['verify_key']
+
+        model_obj.logo = agent.get('logo')
+
+        # TODO: add to model
+        # model_obj.web_url = agent.get('web_url')
+        # model_obj.technical_contact = agent.get('technical_contact')
+        # model_obj.business_contact = agent.get('business_contact')
+        # model_obj.identity_assurance_url = agent.get('identity_assurance_url')
+
+        model_obj.save()
+
+    return HttpResponseRedirect(redirect_to="/directories")
+
+
 
 @csrf_exempt
 def static_discovery(request):

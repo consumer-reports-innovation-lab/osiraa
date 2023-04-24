@@ -1,0 +1,17 @@
+<h2>DRP MVP Privacy Infrastructure Provider</h2>
+
+<p>
+  OSIRAA contains a minimal example of the &quot;Privacy Infrastructure Provider&quot; role as well as the Authorized Agent role.
+</p>
+
+<p>
+    The list of valid Authorized Agents should be regularly fetched from the DRP Service Directory; in a production context this would be performed by a regularly scheduled background task but we will do it manually here. Running this on the "production" instance of OSIRAA running on osiraa.datarightsprotocol.org is essentially a "no-op", but this is useful for populating a local testing instance and for validating the Service Directory models.
+</p>
+    
+<p>
+    <form action="update-directory" method="POST" >
+        {% csrf_token %}
+        <input style="width: 40em;" type="input" name="directory_url" value="{{ directory_url }}">
+        <input type="submit" value="Update AAs from Directory">
+    </form>
+</p>
