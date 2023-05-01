@@ -19,8 +19,7 @@ urlpatterns = [
     path('send_request_excercise_rights', views.send_request_excercise_rights, 
         name='send_request_excercise_rights'),
 
-    path('send_request_get_status', views.send_request_get_status, 
-        name='send_request_get_status'),
+    path('send_request_get_status', views.send_request_get_status, name='send_request_get_status'),
 
     path('send_request_revoke', views.send_request_revoke, name='send_request_revoke'),
 
