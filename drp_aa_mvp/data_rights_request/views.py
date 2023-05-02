@@ -314,7 +314,7 @@ def send_request_revoke(request):
         reason          = "I don't want my account deleted."
         request_url     =  "/v1/data-rights-request/" + str(request_id)
         request_json    = create_revoke_request_json(reason)
-        signed_request  = sign_request(covered_biz.signing_key, request_json)
+        signed_request  = sign_request(signing_key, request_json)
 
         if (validators.url(request_url)):
             response = post_revoke(request_url, bearer_token, signed_request)
@@ -473,7 +473,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
     try:
         response_json = response.json()
 
-        if not('agent' in response_json) or (response_json['agent'] != auth_agent_drp_id):
+        if not('agent-id' in response_json) or (response_json['agent-id'] != auth_agent_drp_id):
             return False
 
         if not('token' in response_json) or (response_json['token'] == ''):
@@ -635,7 +635,7 @@ def get_request_id (covered_biz, user_identity):
     if not DrpRequestTransaction.objects.filter(user_ref=user_identity.id).filter(company_ref=covered_biz.id).exists():
         return None
     
-    data_rights_transaction = DrpRequestTransaction.objects.filter(user_ref=user_identity.id).filter(company_ref=covered_biz.id).latest()
+    data_rights_transaction = DrpRequestTransaction.objects.filter(user_ref=user_identity.id).filter(company_ref=covered_biz.id)[0]
 
     return data_rights_transaction.request_id
 
