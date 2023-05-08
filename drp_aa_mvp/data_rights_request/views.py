@@ -655,7 +655,10 @@ def get_well_known(discovery_url, bearer_token=""):
 
 #POST /v1/data-right-request/
 def post_exercise_rights(request_url, bearer_token, signed_request):
-    request_headers = {'Authorization': f"Bearer {bearer_token}"}
+    request_headers = {
+        'Authorization': f"Bearer {bearer_token}"
+        'Content-Type': "application/octet-stream"
+    }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
 
     return response
@@ -680,7 +683,10 @@ def post_revoke(request_url, bearer_token, signed_request):
 
 #POST /v1/agent/{agent-id} ("Pair-wise Key Setup" endpoint)
 def post_agent(request_url, signed_request):
-    response = requests.post(request_url, data=signed_request)
+    request_headers = {
+        'Content-Type': "application/octet-stream"
+    }
+    response = requests.post(request_url, headers=request_headers, data=signed_request)
 
     return response
 
