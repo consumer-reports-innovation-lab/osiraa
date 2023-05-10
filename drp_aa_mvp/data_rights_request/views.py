@@ -656,7 +656,7 @@ def get_well_known(discovery_url, bearer_token=""):
 #POST /v1/data-right-request/
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {
-        'Authorization': f"Bearer {bearer_token}"
+        'Authorization': f"Bearer {bearer_token}",
         'Content-Type': "application/octet-stream"
     }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
