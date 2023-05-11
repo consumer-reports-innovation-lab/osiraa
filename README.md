@@ -55,7 +55,7 @@ Note: some recent versions macOS have python 2.7 already installed. You'll need 
 Create and activate local python environment:
 
 ```
-python -m venv env
+python3 -m venv env
 . ./env/bin/activate
 ```
 
@@ -81,10 +81,9 @@ python manage.py createsuperuser
 python manage.py collectstatic
 ```
 
-Run/deploy the app:
-
+Run/deploy the app (note: using port 8003 for P'slip/DRP insstance of OSIRAA)
 ```
-python3 manage.py runserver 8001
+python3 manage.py runserver 8003
 ```
 
 See the app in the browser:
