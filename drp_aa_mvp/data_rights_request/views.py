@@ -5,6 +5,10 @@ import os
 import re
 from typing import Optional, Tuple
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 import arrow
 import requests
 import validators
@@ -48,13 +52,13 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
                 signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
 
 
-
 signing_key, verify_key = load_pynacl_keys()
 
 
 # the public key and signing key as b64 strings
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
 verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
+logger.debug(f"verify_key is {verify_key_hex}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
@@ -375,7 +379,7 @@ def set_covered_biz_well_known_params(covered_biz, response):
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
         return False
 
     try:
@@ -384,7 +388,7 @@ def set_covered_biz_well_known_params(covered_biz, response):
         covered_biz.supported_actions = reponse_json['actions']
         covered_biz.save()
     except KeyError as e:
-        print('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
         return False
 
 
@@ -468,7 +472,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_covered_biz_pairwise_key_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): NOT valid json  **')
         return False
 
     try:
@@ -484,7 +488,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
         covered_biz.save()
 
     except KeyError as e:
-        print('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
         return False
 
 
@@ -506,7 +510,7 @@ def set_agent_info_params(response):
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_agent_info_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_agent_info_params(): NOT valid json  **')
         return False
 
     try:
@@ -515,7 +519,7 @@ def set_agent_info_params(response):
         # todo: if a 403 comes back, we should revoke the old bearer key
 
     except KeyError as e:
-        print('**  WARNING - set_agent_info_params(): missing keys **')
+        logger.warn('**  WARNING - set_agent_info_params(): missing keys **')
         return False
 
 #--------------------------------------------------------------------------------------------------#
