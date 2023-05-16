@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -22,7 +23,9 @@ from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 # from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
 import logging
+logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.WARN)
 
 OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 
@@ -204,9 +207,16 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     verify_key_hex = agent.verify_key
     verify_key = VerifyKey(verify_key_hex, encoder=HexEncoder)
 
+    logger.debug(f"vk is {verify_key_hex}")
+    logger.debug(f"agent is {aa_id}")
+
+    decoded = base64.b64decode(request.body)
+    logger.debug(f"decoded is {decoded}")
+    logger.debug(f"encoded is {request.body}")
+
     try:
         # don't need to do anything here -- if it doesn't raise it's verified!
-        serialized_message = verify_key.verify(request.body)
+        serialized_message = verify_key.verify(decoded)
     except nacl.exceptions.BadSignatureError as e:
         # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
         logger.error(f"bad signature from {aa_id}: {e}")

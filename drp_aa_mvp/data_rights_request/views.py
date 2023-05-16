@@ -5,6 +5,10 @@ import os
 import re
 from typing import Optional, Tuple
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 import arrow
 import requests
 import validators
@@ -25,7 +29,7 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
 
-auth_agent_drp_id       = 'CR_AA_DRP_ID_001'
+auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
 # todo: these keys actually should be generated offline before we start using the app
@@ -48,13 +52,13 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
                 signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
 
 
-
 signing_key, verify_key = load_pynacl_keys()
 
 
 # the public key and signing key as b64 strings
 signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
 verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
+logger.debug(f"verify_key is {verify_key_hex}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
@@ -375,7 +379,7 @@ def set_covered_biz_well_known_params(covered_biz, response):
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
         return False
 
     try:
@@ -384,7 +388,7 @@ def set_covered_biz_well_known_params(covered_biz, response):
         covered_biz.supported_actions = reponse_json['actions']
         covered_biz.save()
     except KeyError as e:
-        print('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
         return False
 
 
@@ -445,8 +449,9 @@ def get_request_actions_form_display (covered_biz):
 
 def sign_request(signing_key, request_obj):
     signed_obj = signing_key.sign(json.dumps(request_obj).encode())
+    bencoded = base64.b64encode(signed_obj)
 
-    return signed_obj
+    return bencoded
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
@@ -467,7 +472,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_covered_biz_pairwise_key_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): NOT valid json  **')
         return False
 
     try:
@@ -483,7 +488,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
         covered_biz.save()
 
     except KeyError as e:
-        print('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
         return False
 
 
@@ -505,7 +510,7 @@ def set_agent_info_params(response):
     try:
         json.loads(response.text)
     except ValueError as e:
-        print('**  WARNING - set_agent_info_params(): NOT valid json  **')
+        logger.warn('**  WARNING - set_agent_info_params(): NOT valid json  **')
         return False
 
     try:
@@ -514,7 +519,7 @@ def set_agent_info_params(response):
         # todo: if a 403 comes back, we should revoke the old bearer key
 
     except KeyError as e:
-        print('**  WARNING - set_agent_info_params(): missing keys **')
+        logger.warn('**  WARNING - set_agent_info_params(): missing keys **')
         return False
 
 #--------------------------------------------------------------------------------------------------#
@@ -657,7 +662,7 @@ def get_well_known(discovery_url, bearer_token=""):
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {
         'Authorization': f"Bearer {bearer_token}",
-        'Content-Type': "application/octet-stream"
+        'Content-Type': "text/plain"
     }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
 
@@ -684,7 +689,7 @@ def post_revoke(request_url, bearer_token, signed_request):
 #POST /v1/agent/{agent-id} ("Pair-wise Key Setup" endpoint)
 def post_agent(request_url, signed_request):
     request_headers = {
-        'Content-Type': "application/octet-stream"
+        'Content-Type': "text/plain"
     }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
 
