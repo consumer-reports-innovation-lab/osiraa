@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 import re
@@ -204,9 +205,10 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     verify_key_hex = agent.verify_key
     verify_key = VerifyKey(verify_key_hex, encoder=HexEncoder)
 
+    decoded = base64.b64decode(request.body)
     try:
         # don't need to do anything here -- if it doesn't raise it's verified!
-        serialized_message = verify_key.verify(request.body)
+        serialized_message = verify_key.verify(decoded)
     except nacl.exceptions.BadSignatureError as e:
         # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
         logger.error(f"bad signature from {aa_id}: {e}")

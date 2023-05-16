@@ -25,7 +25,7 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
 
-auth_agent_drp_id       = 'CR_AA_DRP_ID_001'
+auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
 # todo: these keys actually should be generated offline before we start using the app
@@ -445,8 +445,9 @@ def get_request_actions_form_display (covered_biz):
 
 def sign_request(signing_key, request_obj):
     signed_obj = signing_key.sign(json.dumps(request_obj).encode())
+    bencoded = base64.b64encode(signed_obj)
 
-    return signed_obj
+    return bencoded
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
@@ -657,7 +658,7 @@ def get_well_known(discovery_url, bearer_token=""):
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {
         'Authorization': f"Bearer {bearer_token}",
-        'Content-Type': "application/octet-stream"
+        'Content-Type': "text/plain"
     }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
 
@@ -684,7 +685,7 @@ def post_revoke(request_url, bearer_token, signed_request):
 #POST /v1/agent/{agent-id} ("Pair-wise Key Setup" endpoint)
 def post_agent(request_url, signed_request):
     request_headers = {
-        'Content-Type': "application/octet-stream"
+        'Content-Type': "text/plain"
     }
     response = requests.post(request_url, headers=request_headers, data=signed_request)
 
