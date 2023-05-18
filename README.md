@@ -89,7 +89,7 @@ python3 manage.py runserver 8003
 See the app in the browser:
 
 ```
- http://localhost:8001/
+ http://localhost:8003/
 ```
 
 
