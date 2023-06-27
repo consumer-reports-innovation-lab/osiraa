@@ -931,7 +931,7 @@ def test_contains_agent_id_field(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    return 'agent_id' in response_json and response_json['agent_id'] != '' 
+    return 'agent-id' in response_json and response_json['agent-id'] != ''
 
 
 def test_agent_id_matches_request(response, request_url):
