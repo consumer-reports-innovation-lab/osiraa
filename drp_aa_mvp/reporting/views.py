@@ -23,7 +23,7 @@ def test_discovery_endpoint(request_url, responses):
     1.  GET /.well-known/data-rights.json ("Data Rights Discovery" endpoint)
         - Covered Business's domain SHOULD have a /.well-known/data-rights.json
         - Discovery Endpoint MUST be valid JSON
-        - Discovery Endpoint MUST contain a version field (currently 0.7)
+        - Discovery Endpoint MUST contain a version field (currently 0.8)
         - Discovery Endpoint MUST provide a field “api_base”
           - “api_base” url MUST be a well-formed url
           - “api_base” url MUST be valid for subsequent calls
@@ -61,7 +61,7 @@ def test_discovery_endpoint(request_url, responses):
     is_valid_json = test_is_valid_json(response)
     test_results.append({'name': 'Is valid json', 'result': is_valid_json})
 
-    # test Discovery Endpoint MUST contain a version field (currently 0.7)
+    # test Discovery Endpoint MUST contain a version field (currently 0.8)
     contains_version_field = test_contains_version_field(response)
     test_results.append({'name': 'Contains version field', 'result': contains_version_field})
 
@@ -114,7 +114,7 @@ def test_contains_version_field(response):
         response_json = json.loads(response.text)
     except ValueError as e:
         return False 
-    return 'version' in response_json and response_json['version'] == '0.7'  
+    return 'version' in response_json and response_json['version'] == '0.8'  
 
 def test_contains_api_base(response):
     try:
@@ -188,7 +188,7 @@ def test_excercise_endpoint(request_json, response):
         - “business-id” - a string identifying the Covered Business which the request is being sent to
         - “expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable
         - “issued-at” - an ISO 8601-encoded timestamp expressing when the request was created.
-        - “drp.version” - a string referencing the current protocol version "0.7"
+        - “drp.version” - a string referencing the current protocol version "0.8"
         - “exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]
         - “regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]
         - “relationships” (optional) - a list of string 'hints' for the Covered Business

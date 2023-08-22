@@ -1,6 +1,6 @@
 # OSIRAA - Open Source Implementers’ Reference Authorized Agent
 
-Version 0.7.0 - Updated March 2023
+Version 0.8.0 - Updated June 2023
 
 ## There is a live demo version of OSIRAA available at [https://osiraa.datarightsprotocol.org/](https://osiraa.datarightsprotocol.org/).
 
