@@ -25,7 +25,7 @@ from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 import logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.WARN)
+logger.setLevel(logging.DEBUG)
 
 OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 
