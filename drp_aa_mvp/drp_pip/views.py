@@ -32,7 +32,7 @@ OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 @csrf_exempt
 def static_discovery(request):
     return JsonResponse({
-        "version": "0.7",
+        "version": "0.8",
         "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
         "api_base": f"{request.scheme}://{request.get_host()}/pip/",
     })

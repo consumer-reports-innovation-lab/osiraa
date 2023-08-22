@@ -536,7 +536,7 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         "issued-at":    str(issued_time),
 
         # 2
-        "drp.version": "0.7",
+        "drp.version": "0.8",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
