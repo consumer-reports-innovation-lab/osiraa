@@ -55,7 +55,7 @@ Note: some recent versions macOS have python 2.7 already installed. You'll need 
 Create and activate local python environment:
 
 ```
-python -m venv env
+python3 -m venv env
 . ./env/bin/activate
 ```
 
