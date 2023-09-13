@@ -14,12 +14,13 @@ def index(request):
 
 
 #---------------------------------------------------------------------------------------------------------------------#
-# test_discovery_endpoint
+# test_discovery_endpoint - depricated for 0.9
 
+"""
 def test_discovery_endpoint(request_url, responses):
     test_results = []
 
-    """
+    " " "
     1.  GET /.well-known/data-rights.json ("Data Rights Discovery" endpoint)
         - Covered Business's domain SHOULD have a /.well-known/data-rights.json
         - Discovery Endpoint MUST be valid JSON
@@ -32,7 +33,7 @@ def test_discovery_endpoint(request_url, responses):
             - supported “actions” MUST be implemented by "Data Rights Exercise" endpoint
         - Discovery Endpoint MAY contain a hint set “user_relationships”
         - Discovery Endpoint SHOULD NOT contain additional undefined fields
-    """
+    " " "
     test_results = []
 
     # unauthed response SHOULD be a 200 response code
@@ -169,6 +170,7 @@ def test_discovery_contains_no_unknown_fields(response):
         if field not in known_fields:
             return False
     return True
+"""
 
 
 #---------------------------------------------------------------------------------------------------------------------#
@@ -188,7 +190,7 @@ def test_excercise_endpoint(request_json, response):
         - “business-id” - a string identifying the Covered Business which the request is being sent to
         - “expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable
         - “issued-at” - an ISO 8601-encoded timestamp expressing when the request was created.
-        - “drp.version” - a string referencing the current protocol version "0.8"
+        - “drp.version” - a string referencing the current protocol version "0.9"
         - “exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]
         - “regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]
         - “relationships” (optional) - a list of string 'hints' for the Covered Business

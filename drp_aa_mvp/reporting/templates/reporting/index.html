@@ -4,12 +4,14 @@
 
 <h3>DRP Cert Test Suite</h3>
 
-<p>Version 0.8.0 - Updated June 2023</p>
+<p>Version 0.9.0 - Updated Septmeber 2023</p>
 
 <p>See also <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
 
 <br/>
 
+<!---“Data Rights Discovery” endpoint is depricated in 0.9 -->
+<!--
 <p><b>1. &nbsp;	GET /.well-known/data-rights.json (“Data Rights Discovery” endpoint)</b></p>
 <ul>
     <li>Covered Business's domain SHOULD have a /.well-known/data-rights.json</li>
@@ -26,6 +28,7 @@
     <li>Discovery Endpoint SHOULD NOT contain additional undefined fields</li>
 </ul>
 <br/>
+-->
 
 <p><b>2. &nbsp; POST /v1/data-right-request/ (“Data Rights Exercise” endpoint)</b></p>
 <ul>
@@ -43,7 +46,7 @@
             <br/>
 
             <span>The second grouping contains data about the Data Rights Request</span>
-            <li>“drp.version” - a string referencing the current protocol version "0.8"</li>
+            <li>“drp.version” - a string referencing the current protocol version "0.9"</li>
             <li>“exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
             <li>“regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]</li>
             <li>“relationships” (optional) - a list of string 'hints' for the Covered Business</li>
@@ -59,7 +62,6 @@
             <li>“address” (str) - if known, claim SHALL contain the user's preferred address, asspecified in OpenID Connect Core 1.0 section 5.1.1</li>
             <li>“address_verified” (bool) - TRUE if the user's address has been affirmatively verified according to the System Rules</li>
             <li>“power_of_attorney” (str) - MAY contain a reference to a User-signed document delegating power of attorney to the submitting AA</li>
-
         </ul>
     </li>
     <br/>

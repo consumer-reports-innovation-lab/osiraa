@@ -29,6 +29,8 @@ logger.setLevel(logging.DEBUG)
 
 OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 
+# todo: @RRIX - this has been depricated for 0.9 and can be removed, correct?
+"""
 @csrf_exempt
 def static_discovery(request):
     return JsonResponse({
@@ -36,6 +38,7 @@ def static_discovery(request):
         "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
         "api_base": f"{request.scheme}://{request.get_host()}/pip/",
     })
+"""
 
 """
 Privacy Infrastructure Providers MUST validate the message in this order:

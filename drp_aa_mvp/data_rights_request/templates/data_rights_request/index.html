@@ -4,6 +4,17 @@
 <p><a href="/reporting/" target="blank">View test criteria</a></p>
 <br/>
 
+
+<p><b>Refresh Data from the Service Directory</b></p>
+<form action="refresh_service_directory_data" method="POST" >
+    {% csrf_token %}
+    <input type="submit" value="Refresh">
+</form>
+
+<br/>
+<hr/>
+<br/
+
 <h3>Send a DRP Data Privacy Request</h3>
 <br/>
 
@@ -24,6 +35,7 @@
 <hr/>
 <br/>
 
+<!---
 <form action="send_request_discover_data_rights" method="POST" >
     {% csrf_token %}
     <p><b>Discover Data Rights</b> (GET /.well-known/data-rights.json)</p>
@@ -35,6 +47,7 @@
 <br/>
 <hr/>
 <br/>
+-->
 
 <form action="setup_pairwise_key" method="POST" >
     {% csrf_token %}

@@ -29,7 +29,6 @@ ACTION_CHOICES = [
     (ACCESS_SPEC , 'access:specific ')
 ]
 
-
 CCPA        = 'ccpa'
 VOLUNTARY   = 'voluntary'
 
@@ -40,9 +39,8 @@ REGIME_CHOICES = [
 
 """
 class RequestMetaData():
-    version     = "0.8"
+    version     = "0.9"
 """
-
 
 IN_PROGRESS     = 'in_progress'
 OPEN            = 'open'
@@ -100,7 +98,7 @@ class RequestReason(str, Enum):
     other                       = "other"
     none                        = ""
     
-
+    
 class StateReasons(TypedDict):
     status: RequestStatus
     reasons: List[RequestReason]

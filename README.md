@@ -1,6 +1,6 @@
 # OSIRAA - Open Source Implementers’ Reference Authorized Agent
 
-Version 0.8.0 - Updated June 2023
+Version 0.9.0 - Updated September 2023
 
 ## There is a live demo version of OSIRAA available at [https://osiraa.datarightsprotocol.org/](https://osiraa.datarightsprotocol.org/).
 
@@ -8,7 +8,7 @@ Version 0.8.0 - Updated June 2023
 OSIRAA (Open Source Implementers’ Reference Authorized Agent) is a test suite designed to simulate the role of an Authorized Agent in a Data Rights Protocol (DRP) environment.    The application tests for the availability, correctness and completeness of API endpoints of a Privacy Infrastructure Provider (PIP) or Covered Business (CB) partner application.  See <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a> for more info on DRP system roles and API specification.
 
 ## Admin Tool
-A user may model a Privacy Infrastructure Provider (PIP) or Covered Business (CB) in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser before you can administer data configurations.  For version 0.7, a Covered Business requires a Discovery Endpoint, and Auth Bearer Token, to be supplied by the PIP/CB partner.  NOTE:  The previously required API Secret has been depricated.  The Authorized Agent will be using a public/private key instead of shared api secret.
+A user may model a Privacy Infrastructure Provider (PIP) or Covered Business (CB) in the Admin Tool, along with any number of users.  This is a standard Python app, so you must first create an admin superuser before you can administer data configurations.  For version 0.9, the Discovery Endpoint for a Covered Business has been depricated; it has been replaced by a Service Directory.  The Service Directory holds discoverable information for all DPR impelementers in a common place.  This information is periodically queried and the database automatically updated.
 
 ## Cert Tests Definitions
 The Data Rights Protocol is centered on a set of API calls between an Authorized Agent (AA) and a Privacy Infrastructure Provider or Covered Business, on behalf of a User exercising his or her data rights.

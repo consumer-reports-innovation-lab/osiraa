@@ -1,5 +1,5 @@
 all:
   hosts:
     drp-test:
-      ansible_host: 44.209.94.186
+      ansible_host: osiraa.datarightsprotocol.org
       ansible_user: ubuntu

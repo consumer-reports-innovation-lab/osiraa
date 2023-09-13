@@ -19,7 +19,7 @@ from django.shortcuts import render
 from nacl import signing
 from nacl.encoding import HexEncoder
 from nacl.public import PrivateKey
-from reporting.views import (test_agent_information_endpoint, test_discovery_endpoint, test_excercise_endpoint,
+from reporting.views import (test_agent_information_endpoint, test_excercise_endpoint, #test_discovery_endpoint, 
                              test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
 from user_identity.models import IdentityUser
 
@@ -33,7 +33,7 @@ auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
 # todo: these keys actually should be generated offline before we start using the app
-# and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
+# and get them from the v0.9 service directory which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
@@ -78,6 +78,28 @@ def index(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
+'''
+todo:  make a call to the service directory
+  - it will return the info for all CB's, which is equivalent to what use to be 
+    in the well known endpoint for each CB
+  - mill thru service directory json and populate or update the DB with the info for all 
+    entries
+
+  - what happens if an entry is removed ?
+  - what if you point to another SD, such as for testing or staging ?
+  - add a column in the DB for each CB, for its SD source ?
+'''
+def refresh_service_directory_data (request):
+
+    # todo: impl ...
+
+    context = { 
+
+    }
+
+    return render(request, 'data_rights_request/index.html', context)
+
+
 def select_covered_business(request):
     user_identities             = IdentityUser.objects.all()
     covered_businesses          = CoveredBusiness.objects.all()
@@ -96,6 +118,8 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
+# depricated for 0.9, replace with a call to the service directory
+"""
 def send_request_discover_data_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
@@ -130,7 +154,7 @@ def send_request_discover_data_rights(request):
         }
 
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-
+"""
 
 def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
@@ -536,12 +560,13 @@ def create_excercise_request_json(user_identity, covered_biz, request_action, co
         "issued-at":    str(issued_time),
 
         # 2
-        "drp.version": "0.8",
+        "drp.version": "0.9",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
         "status_callback": auth_agent_callback_url,
 
+        #  todo: @RRIX is this link to the claims url still correct and/or relevant?
         # 3
         # claims in IANA JSON Web Token Claims page, see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
         "name": (user_identity.last_name + ", " + user_identity.first_name),
