@@ -32,6 +32,66 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
+service_directory_agents_url      = 'https://discovery.datarightsprotocol.org/agents.json'
+service_directory_businesses_url  = 'https://discovery.datarightsprotocol.org/businesses.json'
+
+# for local testing ...
+"""
+service_directory_agents_json = [
+    {
+        "id": "CR_AA_DRP_ID_001",
+        "name": "OSIRAA Prod Instance",
+        "verify_key": "aa3543a2fa54a9c977c416077ed28ecb651f6465f30d85fe342ab27c0b29e689",
+        "web_url": "https://osiraa.datarightsprotocol.org",
+        "technical_contact": "john.szinger@consumer.org",
+        "business_contact": "ginny.fahs@consumer.org",
+        "identity_assurance_url": "https://permissionslipcr.com/XXX"
+    }
+]
+
+# for local testing ...
+service_directory_businesses_json = '''[
+    {
+        "id": "onetrust_staging_001",
+        "name": "OneTrust Test Instance",
+        "logo": "",
+        "api_base": "https://staging.1trust.ninja/api/datasubject/v2/crp",
+        "supported_actions": [
+            "access",
+            "deletion"
+        ],
+        "web_url": "https://onetrust.com",
+        "technical_contact": "fixme",
+        "business_contact": "fixme"
+    },
+    {
+        "id": "TRANSCEND_TEST_001",
+        "name": "Transcend Test Instance",
+        "logo": "",
+        "api_base": "https://drp.staging.transcen.dental",
+        "supported_actions": [
+            "access"
+        ],
+        "web_url": "https://transcend.io",
+        "technical_contact": "",
+        "business_contact": ""
+    },
+       {
+        "id": "Test_Entry_007",
+        "name": "Testy McTest Instance",
+        "logo": "",
+        "api_base": "https://test.foo.com",
+        "supported_actions": [
+            "access"
+        ],
+        "web_url": "https://test.foo.com",
+        "technical_contact": "",
+        "business_contact": ""
+    }
+]
+'''
+"""
+
 # todo: these keys actually should be generated offline before we start using the app
 # and get them from the v0.9 service directory which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
@@ -79,22 +139,34 @@ def index(request):
 
 
 '''
-todo:  make a call to the service directory
-  - it will return the info for all CB's, which is equivalent to what use to be 
-    in the well known endpoint for each CB
-  - mill thru service directory json and populate or update the DB with the info for all 
-    entries
-
-  - what happens if an entry is removed ?
-  - what if you point to another SD, such as for testing or staging ?
-  - add a column in the DB for each CB, for its SD source ?
+call to the service directory returns the info for all CB's, same as what was in the .well_known endpoint for each CB
+todo: can we point to another SD, such as for testing or staging ?
 '''
 def refresh_service_directory_data (request):
+    request_url = service_directory_businesses_url
+    response = get_service_directory_covered_biz(request_url)
 
-    # todo: impl ...
+    try:
+        response_json = json.loads(response.text)
+    except ValueError as e:
+        logger.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
+        return False 
+    
+    # loop thru entries and update the CB's in the DB
+    for response_item in response_json:
+        covered_biz_cb_id = str(response_item['id'])  # this field corresponds to cb_id in the CovereredBusiness model
+        covered_biz_id    = get_covered_biz_id_from_cb_id(covered_biz_cb_id)  # covered_biz_id is an index to lookup the object
 
-    context = { 
+        if covered_biz_id is not None:
+            covered_biz = CoveredBusiness.objects.get(pk=covered_biz_id)
+            set_covered_biz_params_from_service_directory(covered_biz, response_item)
+        else:
+            create_covered_biz_db_entry_from_service_directory_params(response_item)    
+     
+        # todo: handle case where SD enrty is removed - mark CB in DB as 'removed' ...
 
+    context = {
+        #todo: return indication as to whether call to SD succeeded and updating of DB entries succeeded ...
     }
 
     return render(request, 'data_rights_request/index.html', context)
@@ -399,6 +471,56 @@ def data_rights_request_sent_return(request):
 
 #-------------------------------------------------------------------------------------------------#
 
+def get_covered_biz_id_from_cb_id(covered_biz_cb_id):
+    covered_businesses = CoveredBusiness.objects.all()
+
+    for covered_biz in covered_businesses:
+        if covered_biz.cb_id == covered_biz_cb_id:
+            return covered_biz.id
+     
+    return None
+
+
+def set_covered_biz_params_from_service_directory(covered_biz, params_json):
+    try:
+        json.loads(params_json.text)
+    except ValueError as e:
+        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): NOT valid json  **')
+        return False
+
+    try:
+        reponse_json = params_json.json()
+        covered_biz.api_root = reponse_json['api_base']
+        covered_biz.supported_actions = reponse_json['supported_actions']
+        covered_biz.save()
+    except KeyError as e:
+        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        return False
+
+def create_covered_biz_db_entry_from_service_directory_params (params_json):
+    try:
+        json.loads(params_json.text)
+    except ValueError as e:
+        logger.warn('**  WARNING - create_covered_biz_db_entry_from_service_directory_params(): NOT valid json  **')
+        return False
+
+    try:
+        reponse_json = params_json.json()
+        cb_id               = reponse_json['id']
+        name                = reponse_json['name']
+        logo                = reponse_json['logo']
+        api_root_endpoint   = reponse_json['api_base']
+        supported_actions   = reponse_json['supported_actions']
+
+        new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
+
+    except KeyError as e:
+        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        return False
+
+
+#  depricated in 0.9
+'''
 def set_covered_biz_well_known_params(covered_biz, response):
     try:
         json.loads(response.text)
@@ -414,7 +536,7 @@ def set_covered_biz_well_known_params(covered_biz, response):
     except KeyError as e:
         logger.warn('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
         return False
-
+'''
 
 def get_covered_biz_form_display(covered_businesses, selected_biz):
     if selected_biz == None:
@@ -671,6 +793,12 @@ def get_request_id (covered_biz, user_identity):
 
 
 #-------------------------------------------------------------------------------------------------#
+
+#GET https://discovery.datarightsprotocol.org/businesses.json
+def get_service_directory_covered_biz (service_dir_biz_url):
+    response = requests.get(service_dir_biz_url)
+    return response
+
 
 #GET /.well-known/data-rights.json
 def get_well_known(discovery_url, bearer_token=""):

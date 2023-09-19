@@ -102,6 +102,7 @@ def test_is_discovery_endpoint_valid_url(request_url, response):
 
 def test_is_discovery_endpoint_compliant_url(request_url):
     return '/.well-known/data-rights.json' in request_url
+"""
 
 def test_is_valid_json(response):
     try:
@@ -110,6 +111,7 @@ def test_is_valid_json(response):
         return False    
     return (response.text[0:1] == '{' or response.text[0:1] == '[')
 
+"""
 def test_contains_version_field(response):
     try:
         response_json = json.loads(response.text)
