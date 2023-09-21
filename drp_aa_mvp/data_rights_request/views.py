@@ -190,44 +190,6 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-# depricated for 0.9, replace with a call to the service directory
-"""
-def send_request_discover_data_rights(request):
-    covered_biz_id  = request.POST.get('sel_covered_biz_id')
-    covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
-    request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
-    bearer_token    = covered_biz.auth_bearer_token or ""
-
-    if (validators.url(request_url)):
-        unauthed_response = get_well_known(request_url)
-        response = get_well_known(request_url, bearer_token)
-        set_covered_biz_well_known_params(covered_biz, response)
-
-        discover_test_results = test_discovery_endpoint(request_url, {
-            'unauthed': unauthed_response,
-            'authed': response
-        })
-
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    response.status_code,
-            'response_payload': response.text,
-            'test_results':     discover_test_results,
-        }
-
-    else:
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    'invalid url for /discover, no response',
-            'response_payload': '',
-            'test_results':     [],
-        }
-
-    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-"""
-
 def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
@@ -483,60 +445,28 @@ def get_covered_biz_id_from_cb_id(covered_biz_cb_id):
 
 def set_covered_biz_params_from_service_directory(covered_biz, params_json):
     try:
-        json.loads(params_json.text)
-    except ValueError as e:
-        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): NOT valid json  **')
-        return False
-
-    try:
-        reponse_json = params_json.json()
-        covered_biz.api_root = reponse_json['api_base']
-        covered_biz.supported_actions = reponse_json['supported_actions']
+        # reponse_json = params_json.json()
+        covered_biz.api_root = params_json['api_base']
+        covered_biz.supported_actions = params_json['supported_actions']
         covered_biz.save()
     except KeyError as e:
         logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
-        return False
+        raise e
 
 def create_covered_biz_db_entry_from_service_directory_params (params_json):
     try:
-        json.loads(params_json.text)
-    except ValueError as e:
-        logger.warn('**  WARNING - create_covered_biz_db_entry_from_service_directory_params(): NOT valid json  **')
-        return False
-
-    try:
-        reponse_json = params_json.json()
-        cb_id               = reponse_json['id']
-        name                = reponse_json['name']
-        logo                = reponse_json['logo']
-        api_root_endpoint   = reponse_json['api_base']
-        supported_actions   = reponse_json['supported_actions']
+        cb_id               = params_json['id']
+        name                = params_json['name']
+        logo                = params_json['logo']
+        api_root_endpoint   = params_json['api_base']
+        supported_actions   = params_json['supported_actions']
 
         new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
 
     except KeyError as e:
         logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
-        return False
+        raise e
 
-
-#  depricated in 0.9
-'''
-def set_covered_biz_well_known_params(covered_biz, response):
-    try:
-        json.loads(response.text)
-    except ValueError as e:
-        logger.warn('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
-        return False
-
-    try:
-        reponse_json = response.json()
-        covered_biz.api_root = reponse_json['api_base']
-        covered_biz.supported_actions = reponse_json['actions']
-        covered_biz.save()
-    except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
-        return False
-'''
 
 def get_covered_biz_form_display(covered_businesses, selected_biz):
     if selected_biz == None:
