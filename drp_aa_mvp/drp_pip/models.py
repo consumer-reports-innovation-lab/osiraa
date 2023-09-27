@@ -1,6 +1,8 @@
 from django.db import models
 import data_rights_request.models as drr
 
+import requests
+import json
 
 class MessageValidationException(Exception):
     pass
@@ -35,3 +37,43 @@ class AuthorizedAgent(models.Model):
     @classmethod
     def fetch_by_bearer_token(cls, token: str):
         return cls.objects.get(bearer_token=token)
+
+    @classmethod
+    def refresh_from_directory(cls, directory_url):
+        response = requests.get(directory_url)
+
+        try:
+            response_json = json.loads(response.text)
+        except ValueError as e:
+            logger.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
+            return False 
+
+        # loop thru entries and update the CB's in the DB
+        for item in response_json:
+            agent_id = str(item['id'])  # this field corresponds to cb_id in the CovereredBusiness model
+
+            aa_id = item["id"]
+            name = item["name"]
+            logo = item.get("logo")
+            verify_key = item["verify_key"]
+
+            try:
+                agent_model = cls.fetch_by_id(agent_id)
+            except cls.DoesNotExist as e:
+                agent_model = None
+
+            if agent_model is not None:
+                agent_model.aa_id = aa_id
+                agent_model.name = name
+                agent_model.logo = logo
+                agent_model.verify_key = verify_key
+                agent_model.save()
+            else:
+                new_agent = cls.objects.create(
+                    aa_id = aa_id,
+                    name = name,
+                    logo = logo,
+                    verify_key = verify_key,
+                )
+
+

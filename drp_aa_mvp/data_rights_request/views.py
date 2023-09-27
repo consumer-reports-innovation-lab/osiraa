@@ -26,6 +26,8 @@ from user_identity.models import IdentityUser
 from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
                      DrpRequestTransaction, IdentityPayload)
 
+import drp_pip.models
+
 #root_utl = os.environ['REQUEST_URI']
 #print (f"****  root_url = {root_utl}")
 
@@ -164,6 +166,8 @@ def refresh_service_directory_data (request):
             create_covered_biz_db_entry_from_service_directory_params(response_item)    
      
         # todo: handle case where SD enrty is removed - mark CB in DB as 'removed' ...
+
+    drp_pip.models.AuthorizedAgent.refresh_from_directory(service_directory_agents_url)
 
     context = {
         #todo: return indication as to whether call to SD succeeded and updating of DB entries succeeded ...
