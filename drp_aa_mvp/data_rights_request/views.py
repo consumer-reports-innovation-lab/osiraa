@@ -855,3 +855,6 @@ def get_agent(request_url, bearer_token):
     response = requests.get(request_url, headers=request_headers)
 
     return response
+
+def identity_verification(request):
+    return render(request, 'data_rights_request/identity_verification.html', {})
