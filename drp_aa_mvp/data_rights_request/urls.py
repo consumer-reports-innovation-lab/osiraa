@@ -4,6 +4,7 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
+    path('identity_verification.html', views.identity_verification, name='identity_verification'),
 
     #path('make_request', views.index, name='make_request'),
 
