@@ -35,20 +35,6 @@
 <hr/>
 <br/>
 
-<!---
-<form action="send_request_discover_data_rights" method="POST" >
-    {% csrf_token %}
-    <p><b>Discover Data Rights</b> (GET /.well-known/data-rights.json)</p>
-    <p><span style="display: inline-block; width: 180px;">PIP or Covered Business</span> {{selected_covered_biz}}</p>
-    <input type="hidden" name="sel_covered_biz_id" value={{selected_covered_biz.id}}>
-    <input type="submit" value="Discover Data Rights">
-</form>
-
-<br/>
-<hr/>
-<br/>
--->
-
 <form action="setup_pairwise_key" method="POST" >
     {% csrf_token %}
     <p><b>Setup Pair-wise Key</b> (POST /v1/agent/{agent-id})</p>
@@ -73,9 +59,9 @@
 <hr/>
 <br/>
 
-<form action="send_request_excercise_rights" method="POST" >
+<form action="send_request_exercise_rights" method="POST" >
     {% csrf_token %}
-    <p><b>Excercise Data Rights</b> (POST /v1/data-right-request/)</p>
+    <p><b>Exercise Data Rights</b> (POST /v1/data-right-request/)</p>
     <p><span style="display: inline-block; width: 180px;">PIP or Covered Business</span> {{selected_covered_biz}}</p>
     <p><span style="display: inline-block; width: 180px;">User Identity</span> 
         <select style="display: inline-block; width: 240px;" name="user_identity">

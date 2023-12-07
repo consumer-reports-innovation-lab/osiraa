@@ -43,7 +43,7 @@ class ReportEntry(models.Model):
     covered_biz_name    = models.CharField(max_length=127, blank=True, default='')
     is_pip              = models.BooleanField(default=False)
 
-    # action (for excercise only)
+    # action (for exercise only)
     request_action      = models.CharField(max_length=10, blank=True, default='', 
                                             choices=REQUEST_ACTION_CHOICES)
     covered_regime      = models.CharField(max_length=31, blank=True, default='',

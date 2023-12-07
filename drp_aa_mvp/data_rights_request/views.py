@@ -19,7 +19,7 @@ from django.shortcuts import render
 from nacl import signing
 from nacl.encoding import HexEncoder
 from nacl.public import PrivateKey
-from reporting.views import (test_agent_information_endpoint, test_excercise_endpoint, #test_discovery_endpoint, 
+from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
                              test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
 from user_identity.models import IdentityUser
 
@@ -169,8 +169,18 @@ def refresh_service_directory_data (request):
 
     drp_pip.models.AuthorizedAgent.refresh_from_directory(service_directory_agents_url)
 
+    user_identities             = IdentityUser.objects.all()
+    covered_businesses          = CoveredBusiness.objects.all()
+    covered_biz_id              = request.POST.get('sel_covered_biz_id')
+    selected_covered_biz        = CoveredBusiness.objects.get(pk=covered_biz_id)
+    covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
+    request_actions             = get_request_actions_form_display(selected_covered_biz)
+
     context = {
-        #todo: return indication as to whether call to SD succeeded and updating of DB entries succeeded ...
+        'user_identities':      user_identities,
+        'covered_businesses':   covered_biz_form_display,
+        'selected_covered_biz': selected_covered_biz,
+        'request_actions':      request_actions
     }
 
     return render(request, 'data_rights_request/index.html', context)
@@ -193,6 +203,44 @@ def select_covered_business(request):
 
     return render(request, 'data_rights_request/index.html', context)
 
+
+# depricated for 0.9, replace with a call to the service directory
+"""
+def send_request_discover_data_rights(request):
+    covered_biz_id  = request.POST.get('sel_covered_biz_id')
+    covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
+    request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
+    bearer_token    = covered_biz.auth_bearer_token or ""
+
+    if (validators.url(request_url)):
+        unauthed_response = get_well_known(request_url)
+        response = get_well_known(request_url, bearer_token)
+        set_covered_biz_well_known_params(covered_biz, response)
+
+        discover_test_results = test_discovery_endpoint(request_url, {
+            'unauthed': unauthed_response,
+            'authed': response
+        })
+
+        request_sent_context = {
+            'covered_biz':      covered_biz,
+            'request_url':      request_url,
+            'response_code':    response.status_code,
+            'response_payload': response.text,
+            'test_results':     discover_test_results,
+        }
+
+    else:
+        request_sent_context = {
+            'covered_biz':      covered_biz,
+            'request_url':      request_url,
+            'response_code':    'invalid url for /discover, no response',
+            'response_payload': '',
+            'test_results':     [],
+        }
+
+    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
+"""
 
 def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
@@ -260,7 +308,7 @@ def get_agent_information(request):
 
 
 
-def send_request_excercise_rights(request):
+def send_request_exercise_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     user_id_id      = request.POST.get('user_identity')
@@ -272,9 +320,9 @@ def send_request_excercise_rights(request):
     bearer_token    = covered_biz.auth_bearer_token
 
     # todo: a missing param in the request_json could cause trouble ...
-    #print('**  send_request_excercise_rights(): request_action = ' + request_action)
+    #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
-    request_json    = create_excercise_request_json(user_identity, covered_biz,
+    request_json    = create_exercise_request_json(user_identity, covered_biz,
                                                     request_action, covered_regime)
 
     signed_request  = sign_request(signing_key, request_json)
@@ -301,14 +349,14 @@ def send_request_excercise_rights(request):
             data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,
                                                             covered_biz, request_json, response_json)
 
-        excercise_test_results = test_excercise_endpoint(request_json, response)
+        exercise_test_results = test_exercise_endpoint(request_json, response)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'response_code':    response.status_code,
             'response_payload': response.text,
-            'test_results':     excercise_test_results
+            'test_results':     exercise_test_results
         }
 
     else:
@@ -449,7 +497,6 @@ def get_covered_biz_id_from_cb_id(covered_biz_cb_id):
 
 def set_covered_biz_params_from_service_directory(covered_biz, params_json):
     try:
-        # reponse_json = params_json.json()
         covered_biz.api_root = params_json['api_base']
         covered_biz.supported_actions = params_json['supported_actions']
         covered_biz.save()
@@ -604,7 +651,7 @@ def set_agent_info_params(response):
 
 #--------------------------------------------------------------------------------------------------#
 
-def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
+def create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime):
     issued_time     = arrow.get()
     expires_time    = issued_time.shift(days=45)
 
@@ -660,7 +707,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     data_rights_request = DataRightsRequest.objects.create(
-        #request_id not sent on /excercise call
+        #request_id not sent on /exercise call
         #meta                    = request_json['meta'],
         relationships           = request_json['relationships'],
         status_callback         = request_json['status_callback'],
@@ -684,7 +731,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     #  todo: this doesn't seem to work ...
-    #excercise_request = DrpRequestStatusPair.create(data_rights_request.id, data_rights_status.id)
+    #exercise_request = DrpRequestStatusPair.create(data_rights_request.id, data_rights_status.id)
 
     transaction = DrpRequestTransaction.objects.create(
         user_ref                = user_identity,
@@ -692,9 +739,8 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         request_id              = data_rights_status.request_id,
         current_status          = data_rights_status.status,
         # expires_date            = data_rights_status.expires_date,
-
         is_final                = False,
-        #excer_request           = excercise_request
+        #exer_request           = exercise_request
     )
 
     return transaction

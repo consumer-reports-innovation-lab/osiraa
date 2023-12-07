@@ -127,7 +127,7 @@ def test_contains_api_base(response):
     return 'api_base' in response_json and response_json['api_base'][0:8] == 'https://'
 
 def test_is_valid_api_base(response):
-    # todo: can only test for this by calling /excercise and /status ...
+    # todo: can only test for this by calling /exercise and /status ...
     return 'Unknown'
 
 def test_enumerates_supported_actions(response):
@@ -152,7 +152,7 @@ def test_supported_actions_valid(response):
     return False
 
 def test_supported_actions_implemented(response):
-    # todo: can only test for this by calling /excercise for each supported action ...
+    # todo: can only test for this by calling /exercise for each supported action ...
     return 'Unknown'
 
 def test_conatins_relationships(response):
@@ -176,9 +176,9 @@ def test_discovery_contains_no_unknown_fields(response):
 
 
 #---------------------------------------------------------------------------------------------------------------------#
-# test_excercise_endpoint
+# test_exercise_endpoint
 
-def test_excercise_endpoint(request_json, response):
+def test_exercise_endpoint(request_json, response):
     test_results = []
 
     """
@@ -309,7 +309,7 @@ def test_excercise_endpoint(request_json, response):
     test_results.append({'name': 'Is “expires_at” as ISO time format', 'result': is_expires_at_iso_time_format})
 
     # test additional optional/unknown fields - no additional fields allowed
-    contains_no_unknown_fields = test_excercise_contains_no_unknown_fields(response)
+    contains_no_unknown_fields = test_exercise_contains_no_unknown_fields(response)
     test_results.append({'name': 'Contains no unknown fields', 'result': contains_no_unknown_fields})
 
 
@@ -544,7 +544,7 @@ def test_is_expires_at_iso_time_format(response):
         return False
     return True
 
-def test_excercise_contains_no_unknown_fields(response):
+def test_exercise_contains_no_unknown_fields(response):
     known_fields = ['request_id', 'received_at', 'expected_by', 'status', 'reason', 'processing_details', 'user_verification_url']
     try:
         response_json = json.loads(response.text)
@@ -773,7 +773,7 @@ def test_status_endpoint(request_url, response):
     test_results.append({'name': 'Is “expires_at” as ISO time format', 'result': is_expires_at_iso_time_format})
 
     # test Additional, optional or unknown  fields - no additional fields allowed
-    contains_no_unknown_fields = test_excercise_contains_no_unknown_fields(response)
+    contains_no_unknown_fields = test_exercise_contains_no_unknown_fields(response)
     test_results.append({ 'name': 'Contains no unknown fields', 'result': contains_no_unknown_fields })
 
 
