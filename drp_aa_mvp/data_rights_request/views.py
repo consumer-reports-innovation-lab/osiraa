@@ -173,12 +173,12 @@ def refresh_service_directory_data (request):
     covered_businesses          = CoveredBusiness.objects.all()
     covered_biz_id              = request.POST.get('sel_covered_biz_id')
     selected_covered_biz        = CoveredBusiness.objects.get(pk=covered_biz_id)
-    covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
+    #covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
     request_actions             = get_request_actions_form_display(selected_covered_biz)
 
     context = {
         'user_identities':      user_identities,
-        'covered_businesses':   covered_biz_form_display,
+        'covered_businesses':   covered_businesses, #covered_biz_form_display,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
