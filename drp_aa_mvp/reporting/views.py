@@ -182,7 +182,7 @@ def test_exercise_endpoint(request_json, response):
     test_results = []
 
     """
-    2   POST /v1/data-right-request/ (“Data Rights Exercise” endpoint)
+    2   POST /v1/data-rights-request/ (“Data Rights Exercise” endpoint)
 
         - a Data Rights Exercise request SHALL contain a JSON-encoded message body
         - the message body SHALL have a libsodium/NaCl/ED25119 binary signature immediately prepended to it
