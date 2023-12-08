@@ -6,7 +6,7 @@ import re
 from typing import Optional, Tuple
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 import arrow
@@ -99,6 +99,7 @@ service_directory_businesses_json = '''[
 # for now we'll generate the keys one-time only
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
+    logger.debug(f"OSIRAA_KEY_FILE is {os.path.realpath(path)}")
     if not os.path.exists(path):
         with open(path, "w") as f:
            signing_key = signing.SigningKey.generate()
