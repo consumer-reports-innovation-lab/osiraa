@@ -317,7 +317,7 @@ def send_request_exercise_rights(request):
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
 
-    request_url     = covered_biz.api_root_endpoint + "/v1/data-right-request/"
+    request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request/"
     bearer_token    = covered_biz.auth_bearer_token
 
     # todo: a missing param in the request_json could cause trouble ...
@@ -338,7 +338,7 @@ def send_request_exercise_rights(request):
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
                 'response_code':    response.status_code,
-                'response_payload': 'invalid json in response for /v1/data-right-request/',
+                'response_payload': 'invalid json in response for /v1/data-rights-request/',
                 'test_results':     [],
             }
 
@@ -792,7 +792,7 @@ def get_well_known(discovery_url, bearer_token=""):
     return response
 
 
-#POST /v1/data-right-request/
+#POST /v1/data-rights-request/
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {
         'Authorization': f"Bearer {bearer_token}",

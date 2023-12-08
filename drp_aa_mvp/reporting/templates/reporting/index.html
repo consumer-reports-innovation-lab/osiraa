@@ -30,7 +30,7 @@
 <br/>
 -->
 
-<p><b>2. &nbsp; POST /v1/data-right-request/ (“Data Rights Exercise” endpoint)</b></p>
+<p><b>2. &nbsp; POST /v1/data-rights-request/ (“Data Rights Exercise” endpoint)</b></p>
 <ul>
     <li>A Data Rights Exercise request SHALL contain a JSON-encoded message body</li>
     <li>The message body SHALL have a libsodium/NaCl/ED25119 binary signature immediately prepended to it</li>
@@ -73,14 +73,14 @@
     <li>Values of fields may vary, see below</li>
     <li>Test all supported permutations:
         <ul>
-            <li>POST /v1/data-right-request/ { action: “access”, regime: “ccpa” } </li>
-            <li>POST /v1/data-right-request/ { action: “access”, regime: “voluntary” } </li>
-            <li>POST /v1/data-right-request/ { action: “deletion”, regime: “ccpa” } </li>
-            <li>POST /v1/data-right-request/ { action: “deletion”, regime: “voluntary” } </li>
-            <li>POST /v1/data-right-request/ { action: “sale:opt_out”, regime: “ccpa” } </li>
-            <li>POST /v1/data-right-request/ { action: “sale:opt_out”, regime: “voluntary” } </li>
-            <li>POST /v1/data-right-request/ { action: “sale:opt_in”, regime: “ccpa” } </li>
-            <li>POST /v1/data-right-request/ { action: “sale:opt_in”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request/ { action: “access”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request/ { action: “access”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request/ { action: “deletion”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request/ { action: “deletion”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “voluntary” } </li>
         </ul>
     </li>
 </ul>
@@ -112,7 +112,7 @@
 </ul>
 <br/>
 
-<p><b>2.1. &nbsp; POST /v1/data-right-request/ { action: “access”, regime: “ccpa” } </b></p>
+<p><b>2.1. &nbsp; POST /v1/data-rights-request/ { action: “access”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -120,7 +120,7 @@
 </ul>
 <br/>
 
-<p><b>2.2. &nbsp; POST /v1/data-right-request/ { action: “access”, regime: “voluntary” } </b></p>
+<p><b>2.2. &nbsp; POST /v1/data-rights-request/ { action: “access”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -129,7 +129,7 @@
 </ul>
 <br/>
 
-<p><b>2.3. &nbsp; POST /v1/data-right-request/ { action: “deletion”, regime: “ccpa” } </b></p>
+<p><b>2.3. &nbsp; POST /v1/data-rights-request/ { action: “deletion”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -137,7 +137,7 @@
 </ul>
 <br/>
 
-<p><b>2.4. &nbsp; POST /v1/data-right-request/ { action: “deletion”, regime: “voluntary” } </b></p>
+<p><b>2.4. &nbsp; POST /v1/data-rights-request/ { action: “deletion”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -146,7 +146,7 @@
 </ul>
 <br/>
 
-<p><b>2.5. &nbsp; POST /v1/data-right-request/ { action: “sale:opt_out”, regime: “ccpa” } </b></p>
+<p><b>2.5. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -154,7 +154,7 @@
 </ul>
 <br/>
 
-<p><b>2.6. &nbsp; POST /v1/data-right-request/ { action: “sale:opt_out”, regime: “voluntary” } </b></p>
+<p><b>2.6. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -163,7 +163,7 @@
 </ul>
 <br/>
 
-<p><b>2.7. &nbsp; POST /v1/data-right-request/ { action: “sale:opt_in”, regime: “ccpa” } </b></p>
+<p><b>2.7. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
@@ -171,7 +171,7 @@
 </ul>
 <br/>
 
-<p><b>2.8. &nbsp; POST /v1/data-right-request/ { action: “sale:opt_in”, regime: “voluntary” } </b></p>
+<p><b>2.8. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
