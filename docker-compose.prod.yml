@@ -1,7 +1,13 @@
+volumes:
+  osiraa:
 services:
   web:
     ports:
       - "8000:8000"
+    environment:
+      - OSIRAA_KEY_FILE=/var/lib/osiraa/keys.json
+    volumes:
+      - osiraa:/var/lib/osiraa
   db:
     ports:
       - "15432:5432"
