@@ -4,19 +4,19 @@
 
 <h3>DRP Cert Test Suite</h3>
 
-<p>Version 0.9.0 - Updated Septmeber 2023</p>
+<p>Version 0.9.1 - Updated December 2023</p>
 
 <p>See also <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
 
 <br/>
 
-<!---“Data Rights Discovery” endpoint is depricated in 0.9 -->
+<!-- “Data Rights Discovery” endpoint is depricated in 0.9.1 -->
 <!--
 <p><b>1. &nbsp;	GET /.well-known/data-rights.json (“Data Rights Discovery” endpoint)</b></p>
 <ul>
     <li>Covered Business's domain SHOULD have a /.well-known/data-rights.json</li>
     <li>Discovery Endpoint MUST be valid JSON</li>
-    <li>Discovery Endpoint MUST contain a version field (currently 0.8)</li>
+    <li>Discovery Endpoint MUST contain a version field (currently 0.9.1)</li>
     <li>Discovery Endpoint MUST provide a field “api_base”
         <ul>
             <li>“api_base” url MUST be a well-formed url</li>
@@ -46,7 +46,7 @@
             <br/>
 
             <span>The second grouping contains data about the Data Rights Request</span>
-            <li>“drp.version” - a string referencing the current protocol version "0.9"</li>
+            <li>“drp.version” - a string referencing the current protocol version "0.9.1"</li>
             <li>“exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
             <li>“regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]</li>
             <li>“relationships” (optional) - a list of string 'hints' for the Covered Business</li>

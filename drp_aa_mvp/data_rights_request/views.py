@@ -17,7 +17,7 @@ from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from nacl import signing
-from nacl.encoding import HexEncoder
+from nacl.encoding import Base64Encoder
 from nacl.public import PrivateKey
 from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
                              test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
@@ -95,7 +95,7 @@ service_directory_businesses_json = '''[
 """
 
 # todo: these keys actually should be generated offline before we start using the app
-# and get them from the v0.9 service directory which will be a part of this dhango app, along with OSIRPIP
+# and get them from the v0.9.1 service directory which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
@@ -104,23 +104,23 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
            signing_key = signing.SigningKey.generate()
            verify_key = signing_key.verify_key
            json.dump({
-               "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
-               "verify_key": verify_key.encode(encoder=HexEncoder).decode()
+               "signing_key": signing_key.encode(encoder=Base64Encoder).decode(),
+               "verify_key": verify_key.encode(encoder=Base64Encoder).decode()
            }, f)
 
     with open(path, "r") as f:
         jason = json.load(f)
-        return (signing.SigningKey(jason["signing_key"], encoder=HexEncoder),
-                signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
+        return (signing.SigningKey(jason["signing_key"], encoder=Base64Encoder),
+                signing.VerifyKey(jason["verify_key"], encoder=Base64Encoder))
 
 
 signing_key, verify_key = load_pynacl_keys()
 
 
 # the public key and signing key as b64 strings
-signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
-verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
-logger.debug(f"verify_key is {verify_key_hex}")
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # remains secret, never shared, but remains with AA model
+verify_key_b64 = verify_key.encode(encoder=Base64Encoder)    # we're going to store base64 encoded verify key in the service directory
+logger.debug(f"verify_key is {verify_key_b64}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
@@ -204,7 +204,7 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-# depricated for 0.9, replace with a call to the service directory
+# depricated for 0.9.1, replace with a call to the service directory
 """
 def send_request_discover_data_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
@@ -576,9 +576,9 @@ def get_request_actions_form_display (covered_biz):
 
 def sign_request(signing_key, request_obj):
     signed_obj = signing_key.sign(json.dumps(request_obj).encode())
-    bencoded = base64.b64encode(signed_obj)
+    b64encoded = base64.b64encode(signed_obj)
 
-    return bencoded
+    return b64encoded
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
@@ -663,7 +663,7 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         "issued-at":    str(issued_time),
 
         # 2
-        "drp.version": "0.9",
+        "drp.version": "0.9.1",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],

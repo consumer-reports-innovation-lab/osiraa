@@ -10,7 +10,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse, HttpRequest
-from nacl.encoding import HexEncoder
+from nacl.encoding import Base64Encoder
 from nacl.signing import VerifyKey
 from nacl.utils import random
 import nacl.exceptions
@@ -29,16 +29,6 @@ logger.setLevel(logging.DEBUG)
 
 OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
 
-# todo: @RRIX - this has been depricated for 0.9 and can be removed, correct?
-"""
-@csrf_exempt
-def static_discovery(request):
-    return JsonResponse({
-        "version": "0.8",
-        "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
-        "api_base": f"{request.scheme}://{request.get_host()}/pip/",
-    })
-"""
 
 """
 Privacy Infrastructure Providers MUST validate the message in this order:
@@ -76,7 +66,7 @@ def register_agent(request, aa_id: str):
         return HttpResponse(status=403)
 
     # make a token and persist it...
-    agent.bearer_token = HexEncoder.encode(random(size=64)).decode()
+    agent.bearer_token = Base64Encoder.encode(random(size=64)).decode()
     try:
         agent.save()
         return  JsonResponse({
@@ -207,10 +197,10 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     now = arrow.get()
 
     aa_id = agent.aa_id
-    verify_key_hex = agent.verify_key
-    verify_key = VerifyKey(verify_key_hex, encoder=HexEncoder)
+    verify_key_b64 = agent.verify_key
+    verify_key = VerifyKey(verify_key_b64, encoder=Base64Encoder)
 
-    logger.debug(f"vk is {verify_key_hex}")
+    logger.debug(f"vk is {verify_key_b64}")
     logger.debug(f"agent is {aa_id}")
 
     decoded = base64.b64decode(request.body)
