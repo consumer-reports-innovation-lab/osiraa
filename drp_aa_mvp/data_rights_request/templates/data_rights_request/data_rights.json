@@ -1,5 +1,5 @@
 {
-  "version": "0.8",
+  "version": "0.9.1",
   "api_base": "https://example.com/data-rights",
   "actions": ["sale:opt-out", "sale:opt-in", "access", "deletion"],
   "user_relationships": [ ]

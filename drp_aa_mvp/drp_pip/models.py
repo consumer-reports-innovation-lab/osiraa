@@ -24,7 +24,7 @@ class AuthorizedAgent(models.Model):
     logo_thumbnail        = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
     subtitle_description  = models.TextField(blank=True)
 
-    verify_key            = models.TextField('Hex encoded key to verify signed requests')
+    verify_key            = models.TextField('Base64 encoded key to verify signed requests')
     bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
 
     def __str__(self):
