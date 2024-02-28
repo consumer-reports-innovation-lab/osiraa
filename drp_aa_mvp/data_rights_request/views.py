@@ -259,6 +259,7 @@ def setup_pairwise_key(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'request_obj':      request_obj,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     pairwise_setup_test_results,
@@ -268,6 +269,7 @@ def setup_pairwise_key(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'request_obj':      request_obj,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -337,6 +339,7 @@ def send_request_exercise_rights(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'request_obj':      request_json,
                 'response_code':    response.status_code,
                 'response_payload': 'invalid json in response for /v1/data-rights-request/',
                 'test_results':     [],
@@ -355,6 +358,7 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'request_obj':      request_json,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     exercise_test_results
@@ -364,6 +368,7 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'request_obj':      request_json,
             'response_code':    'invalid url for /excecise , no response',
             'response_payload': '',
             'test_results':     [],
@@ -392,10 +397,10 @@ def send_request_get_status(request):
 
             request_sent_context = {
                 'covered_biz':      covered_biz,
-                'request_url': response.request.url,
-                'response_code': response.status_code,
+                'request_url':      response.request.url,
+                'response_code':    response.status_code,
                 'response_payload': response.text,
-                'test_results': status_test_results
+                'test_results':     status_test_results
             }
         else:
             request_sent_context = {
@@ -441,6 +446,7 @@ def send_request_revoke(request):
             context = {
                 'covered_biz':      covered_biz,
                 'request_url':      response.request.url,
+                'request_obj':      request_json,
                 'response_code':    response.status_code,
                 'response_payload': response.text,
                 'test_results':     revoke_test_results,
@@ -450,6 +456,7 @@ def send_request_revoke(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'request_obj':      request_json,
                 'response_code':    'invalid url for /revoke , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -458,6 +465,7 @@ def send_request_revoke(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
+            'request_obj':      request_json,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -649,6 +657,7 @@ def set_agent_info_params(response):
     except KeyError as e:
         logger.warn('**  WARNING - set_agent_info_params(): missing keys **')
         return False
+
 
 #--------------------------------------------------------------------------------------------------#
 

@@ -62,7 +62,6 @@ python3 -m venv env
 Install requirements:  
 
 ```
-cd drp_aa_mvp
 pip install -r requirements.txt
 ```
 
@@ -76,9 +75,9 @@ createdb authorizedagent
 
 Django setup:
 ```
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py collectstatic
+python3 manage.py migrate
+python3 manage.py createsuperuser
+python3 manage.py collectstatic
 ```
 
 Run/deploy the app:
