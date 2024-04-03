@@ -39,7 +39,7 @@ REGIME_CHOICES = [
 
 """
 class RequestMetaData():
-    version     = "0.9.1"
+    version     = "0.9.3"
 """
 
 IN_PROGRESS     = 'in_progress'

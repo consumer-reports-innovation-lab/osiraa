@@ -95,7 +95,7 @@ service_directory_businesses_json = '''[
 """
 
 # todo: these keys actually should be generated offline before we start using the app
-# and get them from the v0.9.1 service directory which will be a part of this dhango app, along with OSIRPIP
+# and get them from the v0.9.3 service directory which will be a part of this dhango app, along with OSIRPIP
 # for now we'll generate the keys one-time only
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
@@ -205,44 +205,6 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-# depricated for 0.9.1, replace with a call to the service directory
-"""
-def send_request_discover_data_rights(request):
-    covered_biz_id  = request.POST.get('sel_covered_biz_id')
-    covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
-    request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
-    bearer_token    = covered_biz.auth_bearer_token or ""
-
-    if (validators.url(request_url)):
-        unauthed_response = get_well_known(request_url)
-        response = get_well_known(request_url, bearer_token)
-        set_covered_biz_well_known_params(covered_biz, response)
-
-        discover_test_results = test_discovery_endpoint(request_url, {
-            'unauthed': unauthed_response,
-            'authed': response
-        })
-
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    response.status_code,
-            'response_payload': response.text,
-            'test_results':     discover_test_results,
-        }
-
-    else:
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    'invalid url for /discover, no response',
-            'response_payload': '',
-            'test_results':     [],
-        }
-
-    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-"""
-
 def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
@@ -319,7 +281,8 @@ def send_request_exercise_rights(request):
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
 
-    request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request/"
+    # note - removed trailing slash for v0.9.3 !!!
+    request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
     # todo: a missing param in the request_json could cause trouble ...
@@ -341,7 +304,7 @@ def send_request_exercise_rights(request):
                 'request_url':      request_url,
                 'request_obj':      request_json,
                 'response_code':    response.status_code,
-                'response_payload': 'invalid json in response for /v1/data-rights-request/',
+                'response_payload': 'invalid json in response for /v1/data-rights-request',
                 'test_results':     [],
             }
 
@@ -669,23 +632,27 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
-        "expires-at":   str(expires_time),
         "issued-at":    str(issued_time),
+        "expires-at":   str(expires_time),
 
         # 2
-        "drp.version": "0.9.1",
+        "drp.version": "0.9.3",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
         "status_callback": auth_agent_callback_url,
 
-        #  todo: @RRIX is this link to the claims url still correct and/or relevant?
         # 3
-        # claims in IANA JSON Web Token Claims page, see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+        # claims in IANA JSON Web Token Claims page, see
+        # https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+
         "name": (user_identity.last_name + ", " + user_identity.first_name),
         "email": user_identity.email,
+        "email_verified": user_identity.email_verified,
         "phone_number": user_identity.phone_number,
+        "phone_number_verified": user_identity.phone_verified,
         "address": user_identity.get_address(),
+        "address_verified": user_identity.address_verified,
     }
 
     return request_obj

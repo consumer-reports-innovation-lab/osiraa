@@ -1,5 +1,5 @@
 [Unit]
-Description=github.com/consumer-reports-digital-lab/osiraa
+Description=github.com/consumer-reports-innovation-lab/osiraa
 
 [Service]
 Type=simple

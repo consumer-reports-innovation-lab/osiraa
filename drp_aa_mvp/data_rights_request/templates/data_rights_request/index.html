@@ -61,7 +61,7 @@
 
 <form action="send_request_exercise_rights" method="POST" >
     {% csrf_token %}
-    <p><b>Exercise Data Rights</b> (POST /v1/data-rights-request/)</p>
+    <p><b>Exercise Data Rights</b> (POST /v1/data-rights-request)</p>
     <p><span style="display: inline-block; width: 180px;">PIP or Covered Business</span> {{selected_covered_biz}}</p>
     <p><span style="display: inline-block; width: 180px;">User Identity</span> 
         <select style="display: inline-block; width: 240px;" name="user_identity">

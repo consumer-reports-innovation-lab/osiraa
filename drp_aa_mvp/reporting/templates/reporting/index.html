@@ -4,33 +4,13 @@
 
 <h3>DRP Cert Test Suite</h3>
 
-<p>Version 0.9.1 - Updated December 2023</p>
+<p>Version 0.9.3 - Updated April 2024</p>
 
-<p>See also <a href="https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-digital-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
+<p>See also <a href="https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
 
 <br/>
 
-<!-- “Data Rights Discovery” endpoint is depricated in 0.9.1 -->
-<!--
-<p><b>1. &nbsp;	GET /.well-known/data-rights.json (“Data Rights Discovery” endpoint)</b></p>
-<ul>
-    <li>Covered Business's domain SHOULD have a /.well-known/data-rights.json</li>
-    <li>Discovery Endpoint MUST be valid JSON</li>
-    <li>Discovery Endpoint MUST contain a version field (currently 0.9.1)</li>
-    <li>Discovery Endpoint MUST provide a field “api_base”
-        <ul>
-            <li>“api_base” url MUST be a well-formed url</li>
-            <li>“api_base” url MUST be valid for subsequent calls</li>
-        </ul>
-    </li>
-    <li>Discovery Endpoint MUST provide a list of supported “actions”</li>
-    <li>Discovery Endpoint MAY contain a hint set “user_relationships” </li>
-    <li>Discovery Endpoint SHOULD NOT contain additional undefined fields</li>
-</ul>
-<br/>
--->
-
-<p><b>2. &nbsp; POST /v1/data-rights-request/ (“Data Rights Exercise” endpoint)</b></p>
+<p><b>2. &nbsp; POST /v1/data-rights-request (“Data Rights Exercise” endpoint)</b></p>
 <ul>
     <li>A Data Rights Exercise request SHALL contain a JSON-encoded message body</li>
     <li>The message body SHALL have a libsodium/NaCl/ED25119 binary signature immediately prepended to it</li>
@@ -38,22 +18,15 @@
 
     <li>The message body MUST containing the following fields:
         <ul>
-            <span>The first set of claims describes the parties and time frame</span>
             <li>“agent-id” - a string identifying the Authorized Agent which is submitting the data rights request</li>
             <li>“business-id” - a string identifying the Covered Business which the request is being sent to</li>
-            <li>“expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable</li>
             <li>“issued-at” - an ISO 8601-encoded timestamp expressing when the request was created.</li>
-            <br/>
-
-            <span>The second grouping contains data about the Data Rights Request</span>
-            <li>“drp.version” - a string referencing the current protocol version "0.9.1"</li>
+            <li>“expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable</li>
+            <li>“drp.version” - a string referencing the current protocol version "0.9.3"</li>
             <li>“exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
             <li>“regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]</li>
             <li>“relationships” (optional) - a list of string 'hints' for the Covered Business</li>
             <li>“status_callback” (optional) - a URL that the Status Callback can be sent to</li>
-            <br/>
-
-            <span>The JSON object minimally must contain the claims outlined in section 3.04 regarding identity encapsulation</span>
             <li>“name” (str) - if known, claim SHALL contain the user's full name most likely known by the Covered Business</li>
             <li>“email” (str) - if known, claim SHALL contain the user's email address</li>
             <li>“email_verified” (bool) - TRUE if the user's email address has been affirmatively verified according to the System Rules</li>
@@ -69,18 +42,17 @@
     <li>The Privacy Infrastructure Provider SHALL validate the message is signed according to the guidance in section 3.07</li>
     <br/>
 
-    <li>All calls MUST return a Data Rights Status object for all actions listed in .well-known/data-rights.json</li>
-    <li>Values of fields may vary, see below</li>
-    <li>Test all supported permutations:
+    <li>All calls MUST return a Data Rights Status object for all actions listed in the Service Directory for the Covered Business</li>
+    <li>Values of fields may vary, see below.  Test all supported permutations:
         <ul>
-            <li>POST /v1/data-rights-request/ { action: “access”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request/ { action: “access”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request/ { action: “deletion”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request/ { action: “deletion”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </li>
+            <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </li>
+            <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </li>
         </ul>
     </li>
 </ul>
@@ -112,74 +84,81 @@
 </ul>
 <br/>
 
-<p><b>2.1. &nbsp; POST /v1/data-rights-request/ { action: “access”, regime: “ccpa” } </b></p>
+<p><b>2.1. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
 </ul>
 <br/>
 
-<p><b>2.2. &nbsp; POST /v1/data-rights-request/ { action: “access”, regime: “voluntary” } </b></p>
+<p><b>2.2. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
     <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
 </ul>
 <br/>
 
-<p><b>2.3. &nbsp; POST /v1/data-rights-request/ { action: “deletion”, regime: “ccpa” } </b></p>
+<p><b>2.3. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
 </ul>
 <br/>
 
-<p><b>2.4. &nbsp; POST /v1/data-rights-request/ { action: “deletion”, regime: “voluntary” } </b></p>
+<p><b>2.4. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
     <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
 </ul>
 <br/>
 
-<p><b>2.5. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “ccpa” } </b></p>
+<p><b>2.5. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
 </ul>
 <br/>
 
-<p><b>2.6. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_out”, regime: “voluntary” } </b></p>
+<p><b>2.6. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
     <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
 </ul>
 <br/>
 
-<p><b>2.7. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “ccpa” } </b></p>
+<p><b>2.7. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
 </ul>
 <br/>
 
-<p><b>2.8. &nbsp; POST /v1/data-rights-request/ { action: “sale:opt_in”, regime: “voluntary” } </b></p>
+<p><b>2.8. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </b></p>
 <ul>
     <li>Status: “open” | “in_progress” | “denied”</li>
     <li>If status == “open”, reason SHOULD be “none”</li>
     <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
     <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
 </ul>
 <br/>
-
 
 
 <p><b>3. &nbsp; GET /v1/data-rights-request/{request_id} (“Data Rights Status” endpoint)</b></p>

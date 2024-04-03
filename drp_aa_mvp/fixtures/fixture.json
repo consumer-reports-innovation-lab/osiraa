@@ -11,7 +11,7 @@
         "subtitle_description": "",
         "discovery_endpoint": "http://localhost:8000/pip/.well-known/data-rights.json",
         "api_root_endpoint": "http://localhost:8000/pip",
-        "supported_actions": "[\"sale:opt-out\", \"sale:opt-in\", \"access\", \"deletion\"]",
+        "supported_actions": "[ \"sale:opt-out\", \"sale:opt-in\", \"access\", \"deletion\" ]",
         "auth_bearer_token": "_"
     }
 },

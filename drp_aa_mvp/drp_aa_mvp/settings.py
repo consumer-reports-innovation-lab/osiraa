@@ -99,9 +99,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent',
+            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent09',
             'USER': os.environ.get('POSTGRES_USER') or 'postgres',
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'rootz',
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'postgres',
             'HOST': os.environ.get('POSTGRES_HOST') or 'localhost',
             'PORT': os.environ.get('POSTGRES_PORT') or '5432'
         },
