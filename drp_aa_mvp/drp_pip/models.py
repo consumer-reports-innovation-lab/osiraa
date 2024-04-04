@@ -1,20 +1,19 @@
 from django.db import models
 import data_rights_request.models as drr
 
-import requests
 import json
+import logging
+import requests
+
 
 class MessageValidationException(Exception):
     pass
 
-# TKTKTK I should really be thinking hard about just using the one in
-# the OSIRAA side... not sue how that would effect an "internal" end
-# to end test tho right now so just duplicating.
 class DataRightsRequest(drr.DataRightsRequest):
     aa_id                 = models.CharField(max_length=63, blank=True, default='')
+
 class DataRightsStatus(drr.DataRightsStatus):
     aa_id                 = models.CharField(max_length=63, blank=True, default='')
-
 
 class AuthorizedAgent(models.Model):
     name                  = models.CharField(max_length=63, blank=True, default='')
@@ -23,7 +22,6 @@ class AuthorizedAgent(models.Model):
     logo                  = models.ImageField('Logo Image', upload_to='company-logos', blank=True)
     logo_thumbnail        = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
     subtitle_description  = models.TextField(blank=True)
-
     verify_key            = models.TextField('Base64 encoded key to verify signed requests')
     bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
 
@@ -45,7 +43,7 @@ class AuthorizedAgent(models.Model):
         try:
             response_json = json.loads(response.text)
         except ValueError as e:
-            logger.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
+            logging.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
             return False 
 
         # loop thru entries and update the CB's in the DB
@@ -75,5 +73,3 @@ class AuthorizedAgent(models.Model):
                     logo = logo,
                     verify_key = verify_key,
                 )
-
-

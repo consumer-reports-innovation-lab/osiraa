@@ -19,7 +19,7 @@ from .models import (AuthorizedAgent, MessageValidationException,
                      DataRightsRequest, DataRightsStatus)
 from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
-# TKTKTK cross-module import
+# todo: cross-module import ...
 # from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
 import logging
@@ -43,10 +43,7 @@ Privacy Infrastructure Providers MUST validate the message in this order:
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def agent(request, aa_id: str):
-    """
-    urlconfs can't choose a route based on method so we'll do it ourselves
-    I really do hate django.
-    """
+    # urlconfs can't choose a route based on method so we'll do it ourselves
     if request.method == 'GET':
         return agent_status(request, aa_id)
     elif request.method == 'POST':
@@ -55,8 +52,9 @@ def agent(request, aa_id: str):
 
 def register_agent(request, aa_id: str):
     agent = AuthorizedAgent.fetch_by_id(aa_id)
+
     if agent is None:
-        # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
+        # validate that the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path
         logger.error(f"could not find authorized agent for {aa_id}")
         return HttpResponse(status=403)
 
@@ -76,13 +74,14 @@ def register_agent(request, aa_id: str):
     except:
         return HttpResponse(b"Something went wonky! Token did not persist.", status=500)
 
+
 def validate_auth_header(request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     extractor = r"Bearer ([a-zA-Z0-9=+\-_/]+)"
     matches = re.match(extractor, auth_header)
+
     if matches is None:
-        logger.error(f"Auth header did not parse.")
-        logger.error(f"header '{auth_header}'")
+        logger.error(f"Auth header did not parse: '{auth_header}'")
         return None
 
     return matches.group(1)
@@ -90,9 +89,7 @@ def validate_auth_header(request) -> Optional[str]:
 
 @csrf_exempt
 def agent_status(request, aa_id: str):
-    """
-    This method just looks to see that the bearer token is in the DB.
-    """
+    # this method just looks to see that the bearer token is in the DB.
     bearer_token = validate_auth_header(request)
     if not bearer_token:
         return HttpResponse(status=403)
@@ -100,15 +97,14 @@ def agent_status(request, aa_id: str):
     agent = AuthorizedAgent.fetch_by_bearer_token(bearer_token)
 
     if agent.aa_id != aa_id:
-        logger.error(f"bearer token did not match expected AA {aa_id}???")
+        logger.error(f"bearer token did not match expected AA {aa_id}")
         return HttpResponse(status=403)
 
     if agent is None:
-        logger.error(f"tok did not resolve to agent; caller expected {aa_id}")
+        logger.error(f"token did not resolve to agent; caller expected {aa_id}")
         return HttpResponse(status=403)
 
     return JsonResponse({})
-
 
 
 @csrf_exempt
@@ -138,7 +134,7 @@ def exercise(request: HttpRequest):
         status_callback         = message['status_callback'],
         regime                  = db_regime,
         right                   = db_right,
-        # persist claims...?
+        # todo: persist claims ... ?
     )
 
     status = dict(
@@ -190,10 +186,9 @@ def get_status(request, request_id: str):
 
 
 def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> dict:
-    """Validate the message is coming from the specified agent and
-    destined to us in a reasonable time window. Returns the
-    deserialized message or raises.
-    """
+    # validate that the message is coming from the specified agent and destined to us in a reasonable time window 
+    # returns the deserialized message or raises an exception
+
     now = arrow.get()
 
     aa_id = agent.aa_id
@@ -219,23 +214,23 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
 
     aa_id_claim = message["agent-id"]
     if aa_id_claim != aa_id:
-        # Validate that the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
+        # validate that the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
         raise MessageValidationException(f"outer aa {aa_id} doesn't match claim {aa_id_claim}!!")
 
     business_id_claim = message["business-id"]
     if business_id_claim != OSIRAA_PIP_CB_ID:
-        # - That they are the Covered Business specified inside the business-id claim
+        # - that they are the Covered Business specified inside the business-id claim
         raise MessageValidationException(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
 
     expires_at_claim = message["expires-at"]
     if now > arrow.get(expires_at_claim):
-        # TKTKTK: maybe worth checking that it's within like 15 minutes or something just to be sure the AA is compliant?
-        # - That the current time is after the Timestamp issued-at claim
+        # - that the current time is after the Timestamp issued-at claim
+        # todo: check that it's within like 15 minutes or so just to be sure the AA is compliant ... ?
         raise MessageValidationException(f"Message has expired! {expires_at_claim}")
 
     issued_at_claim = message["issued-at"]
     if arrow.get(issued_at_claim) > now:
-        # - That the current time is before the Expiration expires-at claim
+        # - that the current time is before the Expiration expires-at claim
         raise MessageValidationException(f"Message from the future??? {issued_at_claim}")
 
     return message
