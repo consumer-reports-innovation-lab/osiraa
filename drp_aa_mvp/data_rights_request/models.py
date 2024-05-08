@@ -168,7 +168,7 @@ class DataRightsRequest(models.Model):
     identity            = models.ForeignKey(IdentityPayload, null=True, on_delete=models.CASCADE)  
 
     def __str__(self):
-        return f"{self.request_id} asking {self.exercise} for {self.identity}"
+        return f"{self.request_id} asking {self.right} for {self.identity}"
 
 
 class DataRightsStatus(models.Model):
