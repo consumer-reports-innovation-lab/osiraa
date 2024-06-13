@@ -756,6 +756,7 @@ def get_service_directory_covered_biz (service_dir_biz_url):
 
 
 #GET /.well-known/data-rights.json
+'''
 def get_well_known(discovery_url, bearer_token=""):
     if bearer_token != "":
         request_headers = {'Authorization': f"Bearer {bearer_token}"}
@@ -764,6 +765,7 @@ def get_well_known(discovery_url, bearer_token=""):
         response = requests.get(discovery_url)
 
     return response
+'''
 
 
 #POST /v1/data-rights-request/

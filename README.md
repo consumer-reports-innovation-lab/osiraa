@@ -19,9 +19,11 @@ The Data Rights Protocol is centered on a set of API calls between an Authorized
 
 ## Test Against a PIP or Covered Business API Endpoint
 First select a Privacy Infrastructure Provider or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  
-  - GET /.well-known/data-rights.json
-  - POST /exercise
-  - GET /status
+  - POST v1/agent  (i.e. "setup pairwise key")
+  - GET v1/agent  (i.e. "agent information")
+  - POST v1/data-rights-request  (i.e. "execrise")
+  - GET v1/data-rights-request  (i.e. "status")
+  - DELETE /v1/data-rights-request  (i.e. "revoke")
 
 Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool. 
 
