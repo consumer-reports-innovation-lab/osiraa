@@ -119,7 +119,7 @@ signing_key, verify_key = load_pynacl_keys()
 
 
 # the public key and signing key as b64 strings
-signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # remains secret, never shared, but remains with AA model
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # remains secret, never shared, remains with AA model
 verify_key_b64 = verify_key.encode(encoder=Base64Encoder)    # we're going to store base64 encoded verify key in the service directory
 logger.debug(f"verify_key is {verify_key_b64}")
 
@@ -141,10 +141,7 @@ def index(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-'''
-call to the service directory returns the info for all CB's, same as what was in the .well_known endpoint for each CB
-todo: can we point to another SD, such as for testing or staging ?
-'''
+# call to the service directory returns the info for all CB's, same as what was in the .well_known endpoint for each CB
 def refresh_service_directory_data (request):
     request_url = service_directory_businesses_url
     response = get_service_directory_covered_biz(request_url)
@@ -155,10 +152,9 @@ def refresh_service_directory_data (request):
         logger.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
         return False 
     
-    # loop thru entries and update the CB's in the DB
     for response_item in response_json:
-        covered_biz_cb_id = str(response_item['id'])  # this field corresponds to cb_id in the CovereredBusiness model
-        covered_biz_id    = get_covered_biz_id_from_cb_id(covered_biz_cb_id)  # covered_biz_id is an index to lookup the object
+        covered_biz_cb_id = str(response_item['id'])  # corresponds to cb_id in the CovereredBusiness model
+        covered_biz_id    = get_covered_biz_id_from_cb_id(covered_biz_cb_id)  # index to lookup the object
 
         if covered_biz_id is not None:
             covered_biz = CoveredBusiness.objects.get(pk=covered_biz_id)
@@ -209,8 +205,7 @@ def setup_pairwise_key(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
-    request_obj    = create_setup_pairwise_key_request_json(covered_biz.cb_id)
-
+    request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
     signed_request  = sign_request(signing_key, request_obj)
 
     if (validators.url(request_url)):
@@ -222,6 +217,7 @@ def setup_pairwise_key(request):
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'request_obj':      request_obj,
+            'signed_request':   signed_request,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     pairwise_setup_test_results,
@@ -232,6 +228,7 @@ def setup_pairwise_key(request):
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'request_obj':      request_obj,
+            'signed_request':   signed_request,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -288,9 +285,7 @@ def send_request_exercise_rights(request):
     # todo: a missing param in the request_json could cause trouble ...
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
-    request_json    = create_exercise_request_json(user_identity, covered_biz,
-                                                    request_action, covered_regime)
-
+    request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
     signed_request  = sign_request(signing_key, request_json)
 
     if (validators.url(request_url)):
@@ -303,6 +298,7 @@ def send_request_exercise_rights(request):
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
                 'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    response.status_code,
                 'response_payload': 'invalid json in response for /v1/data-rights-request',
                 'test_results':     [],
@@ -322,6 +318,7 @@ def send_request_exercise_rights(request):
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     exercise_test_results
@@ -332,6 +329,7 @@ def send_request_exercise_rights(request):
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    'invalid url for /excecise , no response',
             'response_payload': '',
             'test_results':     [],
@@ -401,15 +399,13 @@ def send_request_revoke(request):
 
         if (validators.url(request_url)):
             response = post_revoke(request_url, bearer_token, signed_request)
-
-            # todo: log request to DB, stop status ping ...
-
             revoke_test_results = test_revoked_endpoint(request_url, response)
 
             context = {
                 'covered_biz':      covered_biz,
                 'request_url':      response.request.url,
                 'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    response.status_code,
                 'response_payload': response.text,
                 'test_results':     revoke_test_results,
@@ -420,6 +416,7 @@ def send_request_revoke(request):
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
                 'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    'invalid url for /revoke , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -429,6 +426,7 @@ def send_request_revoke(request):
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
             'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],

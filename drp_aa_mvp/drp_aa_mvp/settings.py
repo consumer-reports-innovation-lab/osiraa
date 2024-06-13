@@ -31,13 +31,11 @@ ENV = os.environ.get('DJANGO_ENV', DEV)
 SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False #True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'drp-authorized-agent.herokuapp.com', '44.209.94.186', 'osiraa.datarightsprotocol.org']
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'user_identity.apps.UserIdentityConfig',
     'covered_business.apps.CoveredBusinessConfig',
