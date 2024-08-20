@@ -205,11 +205,15 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     now = arrow.get()
 
     aa_id = agent.aa_id
+    
+    # todo: verify this is the correctly encoded verify key
     verify_key_b64 = agent.verify_key
+
+    # todo: what does this do?  why to we need to unencode it?
     verify_key = VerifyKey(verify_key_b64, encoder=Base64Encoder)
 
-    logger.debug(f"vk is {verify_key_b64}")
-    logger.debug(f"agent is {aa_id}")
+    logger.debug(f"verify_key_b64 is {verify_key_b64}")
+    logger.debug(f"authourized_agent_id is {aa_id}")
 
     decoded = base64.b64decode(request.body)
     logger.debug(f"decoded is {decoded}")
@@ -232,18 +236,18 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
 
     business_id_claim = message["business-id"]
     if business_id_claim != OSIRAA_PIP_CB_ID:
-        # - that they are the Covered Business specified inside the business-id claim
+        # validate that they are the Covered Business specified inside the business-id claim
         raise MessageValidationException(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
 
     expires_at_claim = message["expires-at"]
     if now > arrow.get(expires_at_claim):
-        # - that the current time is after the Timestamp issued-at claim
+        # validate that the current time is after the Timestamp issued-at claim
         # todo: check that it's within like 15 minutes or so just to be sure the AA is compliant ... ?
         raise MessageValidationException(f"Message has expired! {expires_at_claim}")
 
     issued_at_claim = message["issued-at"]
     if arrow.get(issued_at_claim) > now:
-        # - that the current time is before the Expiration expires-at claim
+        # validate that the current time is before the Expiration expires-at claim
         raise MessageValidationException(f"Message from the future??? {issued_at_claim}")
 
     return message

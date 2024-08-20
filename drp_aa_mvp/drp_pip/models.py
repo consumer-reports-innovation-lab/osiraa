@@ -22,7 +22,10 @@ class AuthorizedAgent(models.Model):
     logo                  = models.ImageField('Logo Image', upload_to='company-logos', blank=True)
     logo_thumbnail        = models.ImageField(upload_to='company-logos/thumbnails', blank=True)
     subtitle_description  = models.TextField(blank=True)
+    
+    # todo: confirm that it's the correct, base64 encoded key ...
     verify_key            = models.TextField('Base64 encoded key to verify signed requests')
+
     bearer_token          = models.TextField('pair-wise token between AA and CB', blank=True)
 
     def __str__(self):
@@ -53,6 +56,8 @@ class AuthorizedAgent(models.Model):
             aa_id = item["id"]
             name = item["name"]
             logo = item.get("logo")
+
+            # todo: confirm that it's the correct, base64 encoded key ...
             verify_key = item["verify_key"]
 
             try:

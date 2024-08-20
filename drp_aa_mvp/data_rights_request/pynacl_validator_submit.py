@@ -6,6 +6,10 @@ from urllib.request import urlopen, Request
 import urllib.error
 import logging
 
+logging.basicConfig(level=logging.WARN)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 from nacl import signing
 from nacl.public import PrivateKey
 from nacl.encoding import Base64Encoder
@@ -13,21 +17,20 @@ from nacl.encoding import Base64Encoder
 LOCAL_VALIDATOR_URL = "http://localhost:8000/data_rights_request/pynacl_validate"
 
 
+# return a tuple with signing and verify key
 def generate_keys() -> Tuple[str, str]:
-    '''
-    Returns tuple with signing and verify key
-    '''
-    # Generate a private key and a signing key
-    # these are `bytes' objects
+    logger.debug("**  pynacl_validator_submit.generate_keys()")
+
+    # Generate a private key and a signing key, these are `bytes' objects
     signing_key = signing.SigningKey.generate()
     verify_key = signing_key.verify_key
 
     return (signing_key, verify_key)
 
+
+# return a serialized JSON blob signed with the given PyNaCl signing key
 def make_req(signing_key):
-    '''
-    return a serialized JSON blob signed with the given PyNaCl signing key
-    '''
+    logger.debug("**  pynacl_validator_submit.make_req()")
 
     # Create the object to sign
     obj = {
@@ -40,19 +43,22 @@ def make_req(signing_key):
     # Sign the object
     signed_obj = signing_key.sign(json.dumps(obj).encode())
 
-    print(signed_obj)
+    logger.debug(f"**  pynacl_validator_submit.make_req(): signed_obj = {signed_obj}")
     return signed_obj
 
+
 def submit_signed_request(validator_url):
+    logger.debug("**  pynacl_validator_submit.submit_signed_request()")
+    
     signing_key, verify_key = generate_keys()
 
     # Get the public key and signing key as b64 strings
     signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
     verify_key_b64 = verify_key.encode(encoder=Base64Encoder)
 
-    # Print the signing key
-    print(f"Signing key: {signing_key_b64}")
-    print(f"Verify key: {verify_key_b64}")
+    # Print the signing key - why?
+    logger.debug(f"**  pynacl_validator_submit.submit_signed_request(): signing_key_b64 = {signing_key_b64}")
+    logger.debug(f"**  pynacl_validator_submit.submit_signed_request(): verify_key_b64 =: {verify_key_b64}")
 
     signed_obj = make_req(signing_key)
 
@@ -61,6 +67,7 @@ def submit_signed_request(validator_url):
     request.add_header("content-type", "application/octet-stream")
 
     # smuggle DRP verify key in-band. This is NOT sufficient for production security!
+    # what is this?  how we make it production ready?
     request.add_header("X-DRP-VerifyKey", verify_key_b64)
 
     try:

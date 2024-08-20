@@ -29,9 +29,11 @@ from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
 import drp_pip.models
 
 #root_utl = os.environ['REQUEST_URI']
-#print (f"****  root_url = {root_utl}")
+#print (f"**  root_url = {root_utl}")
 
 auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
+
+# todo: make this work for both local and deployed instances ...
 auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
 
 service_directory_agents_url      = 'https://discovery.datarightsprotocol.org/agents.json'
@@ -94,9 +96,10 @@ service_directory_businesses_json = '''[
 '''
 """
 
-# todo: these keys actually should be generated offline before we start using the app
-# and get them from the v0.9.3 service directory which will be a part of this dhango app, along with OSIRPIP
+# AA keys should be generated offline before we start using the app and fetched from 
+# the service directory, which will be a part of this django app, along with OSIRPIP,
 # for now we'll generate the keys one-time only
+# todo: why do we b64 encode then decode ?
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
     logger.debug(f"OSIRAA_KEY_FILE is {os.path.realpath(path)}")
@@ -119,9 +122,9 @@ signing_key, verify_key = load_pynacl_keys()
 
 
 # the public key and signing key as b64 strings
-signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # remains secret, never shared, remains with AA model
-verify_key_b64 = verify_key.encode(encoder=Base64Encoder)    # we're going to store base64 encoded verify key in the service directory
-logger.debug(f"verify_key is {verify_key_b64}")
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # secret, never shared, remains with AA model
+verify_key_b64 = verify_key.encode(encoder=Base64Encoder)    # base64 encoded verify key to be stored in the service directory
+logger.debug(f"verify_key_b64 = {verify_key_b64}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
@@ -211,11 +214,15 @@ def setup_pairwise_key(request):
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
         pairwise_setup_test_results = test_pairwise_key_setup_endpoint(request_obj, response)
+
+        # todo: should we use the raw keys or the b64 encoded keys here ... ?
         set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'request_obj':      request_obj,
             'signed_request':   signed_request,
             'response_code':    response.status_code,
@@ -227,6 +234,8 @@ def setup_pairwise_key(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'request_obj':      request_obj,
             'signed_request':   signed_request,
             'response_code':    'invalid url for /create_pairwise_key, no response',
@@ -235,7 +244,6 @@ def setup_pairwise_key(request):
         }
 
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-
 
 
 def get_agent_information(request):
@@ -252,6 +260,8 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     agent_info_test_results,
@@ -261,13 +271,14 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
         }
 
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-
 
 
 def send_request_exercise_rights(request):
@@ -278,7 +289,7 @@ def send_request_exercise_rights(request):
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
 
-    # note - removed trailing slash for v0.9.3 !!!
+    # note - removed trailing slash
     request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
@@ -297,6 +308,8 @@ def send_request_exercise_rights(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'verify_key_raw':   verify_key,
+                'verify_key_b64':   verify_key_b64,
                 'request_obj':      request_json,
                 'signed_request':   signed_request,
                 'response_code':    response.status_code,
@@ -317,6 +330,8 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    response.status_code,
@@ -328,6 +343,8 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    'invalid url for /excecise , no response',
@@ -357,6 +374,8 @@ def send_request_get_status(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      response.request.url,
+                'verify_key_raw':   verify_key,
+                'verify_key_b64':   verify_key_b64,
                 'response_code':    response.status_code,
                 'response_payload': response.text,
                 'test_results':     status_test_results
@@ -365,6 +384,8 @@ def send_request_get_status(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'verify_key_raw':   verify_key,
+                'verify_key_b64':   verify_key_b64,
                 'response_code':    'invalid url for /status , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -373,6 +394,8 @@ def send_request_get_status(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -413,6 +436,8 @@ def send_request_revoke(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'verify_key_raw':   verify_key,
+                'verify_key_b64':   verify_key_b64,
                 'request_obj':      request_json,
                 'signed_request':   signed_request,
                 'response_code':    'invalid url for /revoke , no response',
@@ -423,6 +448,8 @@ def send_request_revoke(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
+            'verify_key_raw':   verify_key,
+            'verify_key_b64':   verify_key_b64,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
@@ -562,7 +589,7 @@ def create_setup_pairwise_key_request_json(covered_biz_id):
 
     return request_json
 
-
+# todo: should be passing in the raw key or the b64 encoded key?  confirm we're doing it correctly ...
 def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key):
     try:
         json.loads(response.text)
