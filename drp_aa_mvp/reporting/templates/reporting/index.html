@@ -1,308 +1,304 @@
-<br/>
-<h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
-<br/>
-
-<h3>DRP Cert Test Suite</h3>
-
-<p>Version 0.9.3 - Updated April 2024</p>
-
-<p>See also <a href="https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
-
-<br/>
-
-<p><b>2. &nbsp; POST /v1/data-rights-request (“Data Rights Exercise” endpoint)</b></p>
-<ul>
-    <li>A Data Rights Exercise request SHALL contain a JSON-encoded message body</li>
-    <li>The message body SHALL have a libsodium/NaCl/ED25119 binary signature immediately prepended to it</li>
+<div style="margin:60px;">
+    <h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
     <br/>
 
-    <li>The message body MUST containing the following fields:
-        <ul>
-            <li>“agent-id” - a string identifying the Authorized Agent which is submitting the data rights request</li>
-            <li>“business-id” - a string identifying the Covered Business which the request is being sent to</li>
-            <li>“issued-at” - an ISO 8601-encoded timestamp expressing when the request was created.</li>
-            <li>“expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable</li>
-            <li>“drp.version” - a string referencing the current protocol version "0.9.3"</li>
-            <li>“exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
-            <li>“regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]</li>
-            <li>“relationships” (optional) - a list of string 'hints' for the Covered Business</li>
-            <li>“status_callback” (optional) - a URL that the Status Callback can be sent to</li>
-            <li>“name” (str) - if known, claim SHALL contain the user's full name most likely known by the Covered Business</li>
-            <li>“email” (str) - if known, claim SHALL contain the user's email address</li>
-            <li>“email_verified” (bool) - TRUE if the user's email address has been affirmatively verified according to the System Rules</li>
-            <li>“phone_number” (str) - if known, claim SHALL contain the user's phone number in E.164 encoding</li>
-            <li>“phone_number_verified” (bool) - TRUE if the user's phone number has been affirmatively verified according to the System Rules</li>
-            <li>“address” (str) - if known, claim SHALL contain the user's preferred address, asspecified in OpenID Connect Core 1.0 section 5.1.1</li>
-            <li>“address_verified” (bool) - TRUE if the user's address has been affirmatively verified according to the System Rules</li>
-            <li>“power_of_attorney” (str) - MAY contain a reference to a User-signed document delegating power of attorney to the submitting AA</li>
-        </ul>
-    </li>
+    <h3>DRP Cert Test Suite</h3>
+
+    <p>Version 0.9.3 - Updated June 2024</p>
+
+    <p>See also <a href="https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a></p>
     <br/>
 
-    <li>The Privacy Infrastructure Provider SHALL validate the message is signed according to the guidance in section 3.07</li>
+    <p><b>2. &nbsp; POST /v1/data-rights-request (“Data Rights Exercise” endpoint)</b></p>
+    <ul>
+        <li>A Data Rights Exercise request SHALL contain a JSON-encoded message body</li>
+        <li>The message body SHALL have a libsodium/NaCl/ED25119 binary signature immediately prepended to it</li>
+        <br/>
+
+        <li>The message body MUST containing the following fields:
+            <ul>
+                <li>“agent-id” - a string identifying the Authorized Agent which is submitting the data rights request</li>
+                <li>“business-id” - a string identifying the Covered Business which the request is being sent to</li>
+                <li>“issued-at” - an ISO 8601-encoded timestamp expressing when the request was created.</li>
+                <li>“expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable</li>
+                <li>“drp.version” - a string referencing the current protocol version "0.9.3"</li>
+                <li>“exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]</li>
+                <li>“regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]</li>
+                <li>“relationships” (optional) - a list of string 'hints' for the Covered Business</li>
+                <li>“status_callback” (optional) - a URL that the Status Callback can be sent to</li>
+                <li>“name” (str) - if known, claim SHALL contain the user's full name most likely known by the Covered Business</li>
+                <li>“email” (str) - if known, claim SHALL contain the user's email address</li>
+                <li>“email_verified” (bool) - TRUE if the user's email address has been affirmatively verified according to the System Rules</li>
+                <li>“phone_number” (str) - if known, claim SHALL contain the user's phone number in E.164 encoding</li>
+                <li>“phone_number_verified” (bool) - TRUE if the user's phone number has been affirmatively verified according to the System Rules</li>
+                <li>“address” (str) - if known, claim SHALL contain the user's preferred address, asspecified in OpenID Connect Core 1.0 section 5.1.1</li>
+                <li>“address_verified” (bool) - TRUE if the user's address has been affirmatively verified according to the System Rules</li>
+                <li>“power_of_attorney” (str) - MAY contain a reference to a User-signed document delegating power of attorney to the submitting AA</li>
+            </ul>
+        </li>
+        <br/>
+
+        <li>The Privacy Infrastructure Provider SHALL validate the message is signed according to the guidance in section 3.07</li>
+        <br/>
+
+        <li>All calls MUST return a Data Rights Status object for all actions listed in the Service Directory for the Covered Business</li>
+        <li>Values of fields may vary, see below.  Test all supported permutations:
+            <ul>
+                <li>POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </li>
+                <li>POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </li>
+                <li>POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </li>
+                <li>POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </li>
+                <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </li>
+                <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </li>
+                <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </li>
+                <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </li>
+            </ul>
+        </li>
+    </ul>
+
+    <ul>
+        <li>Returns a Data Rights Status object
+            <ul>
+                <li>MUST contain field “request_id”</li>
+                <li>“request_id” is globally unique</li>
+                <li>MUST contain field “status”</li>
+                <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+                <li>allowable status values vary with action; see below</li>
+                <li>MAY contain field “reason”</li>
+                <li>“reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+                <li>allowable reason values vary with status; see below</li>
+                <li>MUST contain field “received_at”</li>
+                <li>“received_at” is an ISO 8601 string (ISO time format)</li>
+                <li>SHOULD contain field “expected_by”</li>
+                <li>“expected_by” is an ISO 8601 string (ISO time format)</li>
+                <li> MAY contain a field "processing_details", a text string - <i>@RR is there a max character length?</i></li>
+                <li>MAY contain a field "user_verification_url"</li>
+                <li>"user_verification_url" must be a well formatted URI</li>
+                <li>"user_verification_url" must a valid endmpoint which correctly returns data about the request</li>
+                <li>MAY contain a field "expires_at"</li>
+                <li>"expires_at" should be an [ISO 8601]-encoded time</li>
+                <li>Additional optional/unknown fields - throw a warning</li>
+            </ul>
+        </li>
+    </ul>
     <br/>
 
-    <li>All calls MUST return a Data Rights Status object for all actions listed in the Service Directory for the Covered Business</li>
-    <li>Values of fields may vary, see below.  Test all supported permutations:
-        <ul>
-            <li>POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </li>
-            <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </li>
-            <li>POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </li>
-        </ul>
-    </li>
-</ul>
+    <p><b>2.1. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+    </ul>
+    <br/>
 
-<ul>
-    <li>Returns a Data Rights Status object
-        <ul>
-            <li>MUST contain field “request_id”</li>
-            <li>“request_id” is globally unique</li>
-            <li>MUST contain field “status”</li>
-            <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
-            <li>allowable status values vary with action; see below</li>
-            <li>MAY contain field “reason”</li>
-            <li>“reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
-            <li>allowable reason values vary with status; see below</li>
-            <li>MUST contain field “received_at”</li>
-            <li>“received_at” is an ISO 8601 string (ISO time format)</li>
-            <li>SHOULD contain field “expected_by”</li>
-            <li>“expected_by” is an ISO 8601 string (ISO time format)</li>
-            <li> MAY contain a field "processing_details", a text string - <i>@RR is there a max character length?</i></li>
-            <li>MAY contain a field "user_verification_url"</li>
-            <li>"user_verification_url" must be a well formatted URI</li>
-            <li>"user_verification_url" must a valid endmpoint which correctly returns data about the request</li>
-            <li>MAY contain a field "expires_at"</li>
-            <li>"expires_at" should be an [ISO 8601]-encoded time</li>
-            <li>Additional optional/unknown fields - throw a warning</li>
-        </ul>
-    </li>
-</ul>
-<br/>
+    <p><b>2.2. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress” | “denied”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+        <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    </ul>
+    <br/>
 
-<p><b>2.1. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “ccpa” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-</ul>
-<br/>
+    <p><b>2.3. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+    </ul>
+    <br/>
 
-<p><b>2.2. &nbsp; POST /v1/data-rights-request { action: “access”, regime: “voluntary” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress” | “denied”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
-</ul>
-<br/>
+    <p><b>2.4. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress” | “denied”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+        <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    </ul>
+    <br/>
 
-<p><b>2.3. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “ccpa” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-</ul>
-<br/>
+    <p><b>2.5. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+    </ul>
+    <br/>
 
-<p><b>2.4. &nbsp; POST /v1/data-rights-request { action: “deletion”, regime: “voluntary” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress” | “denied”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
-</ul>
-<br/>
+    <p><b>2.6. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress” | “denied”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+        <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    </ul>
+    <br/>
 
-<p><b>2.5. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “ccpa” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-</ul>
-<br/>
+    <p><b>2.7. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+    </ul>
+    <br/>
 
-<p><b>2.6. &nbsp; POST /v1/data-rights-request { action: “sale:opt_out”, regime: “voluntary” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress” | “denied”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
-</ul>
-<br/>
-
-<p><b>2.7. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “ccpa” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-</ul>
-<br/>
-
-<p><b>2.8. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </b></p>
-<ul>
-    <li>Status: “open” | “in_progress” | “denied”</li>
-    <li>If status == “open”, reason SHOULD be “none”</li>
-    <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
-    <li>If status == “in_progress”, response MUST contain "expires-at"</li>
-    <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
-</ul>
-<br/>
+    <p><b>2.8. &nbsp; POST /v1/data-rights-request { action: “sale:opt_in”, regime: “voluntary” } </b></p>
+    <ul>
+        <li>Status: “open” | “in_progress” | “denied”</li>
+        <li>If status == “open”, reason SHOULD be “none”</li>
+        <li>If status == “in_progress”, reason SHOULD be “need_verification” | “none”</li>
+        <li>If status == “in_progress”, response MUST contain "expires-at"</li>
+        <li>If status == “denied”, reason SHOULD be “outside_jurisdiction”</li>
+    </ul>
+    <br/>
 
 
-<p><b>3. &nbsp; GET /v1/data-rights-request/{request_id} (“Data Rights Status” endpoint)</b></p>
-<ul>
+    <p><b>3. &nbsp; GET /v1/data-rights-request/{request_id} (“Data Rights Status” endpoint)</b></p>
+    <ul>
+        <li>Returns a Data Rights Status object</li>
+        <li>Data Rights Status object MUST contain field “request_id”
+            <ul>
+                <li>“request_id” value should match the value passed in</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object SHOULD contain field “received_at”
+            <ul>
+                <li>“received_at” is an ISO 8601 string (ISO time format)</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object SHOULD contain field “expected_by”
+            <ul>
+                <li>“expected_by” is an ISO 8601 string (ISO time format)</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object MUST contain field “status” 
+            <ul>
+                <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+                <li>allowable status values vary with action; see below</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object MAY contain “reason” field
+            <ul>
+                <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+                <li>allowable reason values vary with status; see below</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object MAY contain field “processing_details” 
+            <ul>
+                <li>unconstrained text - <i>@RR is the there a max character limit?</i></li>
+            </ul>
+        </li>
+        <li>Data Rights Status object MAY contain field “user_verification_url”
+            <ul>
+                <li>“user_verification_url” is a well-formatted url</li>
+                <li>“user_verification_url” is a an returns the correct data when called</li>
+            </ul>
+        </li>
+        <li>Data Rights Status object MAY contain field “expires_at”
+            <ul>
+                <li>“expires_at” is an ISO 8601 string (ISO time format)</li>
+            </ul>
+        </li>
+
+        <li>Additional optional/unknown fields - throw a warning</li>
+    </ul>
+    <br/>
+
+    <p><b>3.1 &nbsp; GET /status fulfilled</b></p>
+    <ul>
+        <li>Additional fields: “results_url”, “expires_at”</li>
+        <li>Final</li>
+    </ul>
+    <br/>
+
+    <p><b>3.2 &nbsp; GET /status denied</b></p>
+    <ul>
+        <li>“reason” allowable values: "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+        <li>Additional fields: “processing_details”</li>
+        <li>Final for all reasons except "too_many_requests"</li>
+    </ul>
+    <br/>
+
+    <p><b>3.3 &nbsp; GET /status expired</b></p>
+    <ul>
+        <li>The time is currently after “expires_at” in the request</li>
+        <li>Final</li>
+    </ul>
+    <br/>
+
+    <p><b>3.4 &nbsp; GET /status revoked</b></p>
+    <ul>
+        <li>Final</li>
+    </ul>
+    <br/>
+
+
+    <p><b>3.5 &nbsp; POST $status_callback (“Data Rights Status Callback” endpoint)</b></p>
+    <ul>
+        <li>SHOULD be implemented by Authorized Agents which will be exercising data rights for multiple Users</li>
+        <li>The request body MUST adhere to the Exercise Status Schema</li>
+        <li>THe PIP SHOULD make a best effort to ensure that a 200 response is issued for the most recent status update</li>
+        <li>The body of the callback's response SHOULD be discarded and not be considered for parsing</li>
+    </ul>
+    <br/>
+
+
+    <p><b>4 &nbsp; DELETE /v1/data-rights-request/{request_id} (“Data Rights Revoke” endpoint)</b></p>
+    <ul>
     <li>Returns a Data Rights Status object</li>
     <li>Data Rights Status object MUST contain field “request_id”
         <ul>
-            <li>“request_id” value should match the value passed in</li>
+            <li>“request_id” value should match the value passed in </li>
         </ul>
     </li>
-    <li>Data Rights Status object SHOULD contain field “received_at”
+    <li>Data Rights Status object MUST contain field “received_at”
         <ul>
             <li>“received_at” is an ISO 8601 string (ISO time format)</li>
         </ul>
     </li>
-    <li>Data Rights Status object SHOULD contain field “expected_by”
+    <li>Data Rights Status object MUST contain “status” field
         <ul>
-            <li>“expected_by” is an ISO 8601 string (ISO time format)</li>
-        </ul>
-    </li>
-    <li>Data Rights Status object MUST contain field “status” 
-        <ul>
-            <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
+            <li>“status” allowable values: [ "in_progress" | "open" | "revoked" | "denied" | "expired" ]</li>
             <li>allowable status values vary with action; see below</li>
+            <li>Responses MUST contain the new revoked state - <i>@RR this is underspecified, in what field is "revoked" contained?</i></li>
         </ul>
     </li>
     <li>Data Rights Status object MAY contain “reason” field
-        <ul>
+        <ul>   
             <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
             <li>allowable reason values vary with status; see below</li>
         </ul>
     </li>
-    <li>Data Rights Status object MAY contain field “processing_details” 
+    <li>Additional optional fields 
         <ul>
-            <li>unconstrained text - <i>@RR is the there a max character limit?</i></li>
+            <li>TBD - enumerated in DRP spec, some have enumerated values for their fields</li>
         </ul>
     </li>
-    <li>Data Rights Status object MAY contain field “user_verification_url”
-        <ul>
-            <li>“user_verification_url” is a well-formatted url</li>
-            <li>“user_verification_url” is a an returns the correct data when called</li>
-        </ul>
-    </li>
-    <li>Data Rights Status object MAY contain field “expires_at”
-        <ul>
-            <li>“expires_at” is an ISO 8601 string (ISO time format)</li>
-        </ul>
-    </li>
-
     <li>Additional optional/unknown fields - throw a warning</li>
-</ul>
-<br/>
+    </ul>
+    <br/>
 
-<p><b>3.1 &nbsp; GET /status fulfilled</b></p>
-<ul>
-    <li>Additional fields: “results_url”, “expires_at”</li>
-    <li>Final</li>
-</ul>
-<br/>
-
-<p><b>3.2 &nbsp; GET /status denied</b></p>
-<ul>
-    <li>“reason” allowable values: "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
-    <li>Additional fields: “processing_details”</li>
-    <li>Final for all reasons except "too_many_requests"</li>
-</ul>
-<br/>
-
-<p><b>3.3 &nbsp; GET /status expired</b></p>
-<ul>
-    <li>The time is currently after “expires_at” in the request</li>
-    <li>Final</li>
-</ul>
-<br/>
-
-<p><b>3.4 &nbsp; GET /status revoked</b></p>
-<ul>
-    <li>Final</li>
-</ul>
-<br/>
-
-
-<p><b>3.5 &nbsp; POST $status_callback (“Data Rights Status Callback” endpoint)</b></p>
-<ul>
-    <li>SHOULD be implemented by Authorized Agents which will be exercising data rights for multiple Users</li>
-    <li>The request body MUST adhere to the Exercise Status Schema</li>
-    <li>THe PIP SHOULD make a best effort to ensure that a 200 response is issued for the most recent status update</li>
-    <li>The body of the callback's response SHOULD be discarded and not be considered for parsing</li>
-</ul>
-<br/>
-
-
-<p><b>4 &nbsp; DELETE /v1/data-rights-request/{request_id} (“Data Rights Revoke” endpoint)</b></p>
-<ul>
-<li>Returns a Data Rights Status object</li>
-<li>Data Rights Status object MUST contain field “request_id”
+    <p><b>5 &nbsp; POST /v1/agent/{agent-id} (“Pair-wise Key Setup” endpoint)</b></p>
     <ul>
-        <li>“request_id” value should match the value passed in </li>
+        <li>returns a JSON response</li>
+        <li>response has a field “agent-id”</li>
+        <li>“agent-id” key SHALL match the agent-id presented in the signed request</li>
+        <li>response has a field "token"</li>
+        <li>PIPs SHOULD generate this token using a cryptographically secure source such as libsodium's CSPRNG</li>
+        <li>if validation fails, the PIP SHALL return an HTTP 403 Forbidden response with no response body</li>
     </ul>
-</li>
-<li>Data Rights Status object MUST contain field “received_at”
-    <ul>
-        <li>“received_at” is an ISO 8601 string (ISO time format)</li>
-    </ul>
-</li>
-<li>Data Rights Status object MUST contain “status” field
-    <ul>
-        <li>“status” allowable values: [ "in_progress" | "open" | "revoked" | "denied" | "expired" ]</li>
-        <li>allowable status values vary with action; see below</li>
-        <li>Responses MUST contain the new revoked state - <i>@RR this is underspecified, in what field is "revoked" contained?</i></li>
-    </ul>
-</li>
-<li>Data Rights Status object MAY contain “reason” field
-    <ul>   
-        <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
-        <li>allowable reason values vary with status; see below</li>
-    </ul>
-</li>
-<li>Additional optional fields 
-    <ul>
-        <li>TBD - enumerated in DRP spec, some have enumerated values for their fields</li>
-    </ul>
-</li>
-<li>Additional optional/unknown fields - throw a warning</li>
-</ul>
-<br/>
+    <br/>
 
-<p><b>5 &nbsp; POST /v1/agent/{agent-id} (“Pair-wise Key Setup” endpoint)</b></p>
-<ul>
-    <li>returns a JSON response</li>
-    <li>response has a field “agent-id”</li>
-    <li>“agent-id” key SHALL match the agent-id presented in the signed request</li>
-    <li>response has a field "token"</li>
-    <li>PIPs SHOULD generate this token using a cryptographically secure source such as libsodium's CSPRNG</li>
-    <li>if validation fails, the PIP SHALL return an HTTP 403 Forbidden response with no response body</li>
-</ul>
-<br/>
-
-<p><b>5.1 &nbsp; GET /v1/agent/{agent-id} (“Agent Information” endpoint)</b></p>
-<ul>
-    <li>does not need to return anything more than an empty JSON document and HTTP 200 response code</li>
-    <li>if the agent-id presented does not match the presented Bearer Token, the PIP MUST return a 403 Forbidden response</li>
-</ul>
-<br/>
-
-<br/>
-<br/>
+    <p><b>5.1 &nbsp; GET /v1/agent/{agent-id} (“Agent Information” endpoint)</b></p>
+    <ul>
+        <li>does not need to return anything more than an empty JSON document and HTTP 200 response code</li>
+        <li>if the agent-id presented does not match the presented Bearer Token, the PIP MUST return a 403 Forbidden response</li>
+    </ul>
+</div>

@@ -43,15 +43,21 @@ Privacy Infrastructure Providers MUST validate the message in this order:
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def agent(request, aa_id: str):
+    logger.info('**  drp_pip.agent()')
+
     # urlconfs can't choose a route based on method so we'll do it ourselves
-    if request.method == 'GET':
-        return agent_status(request, aa_id)
-    elif request.method == 'POST':
+    if request.method == 'POST':
         return register_agent(request, aa_id)
+    elif request.method == 'GET':
+        return agent_status(request, aa_id)
+    
 
-
+@csrf_exempt
 def register_agent(request, aa_id: str):
+    logger.info('**  drp_pip.register_agent()')
+
     agent = AuthorizedAgent.fetch_by_id(aa_id)
+    logger.info(f'**  drp_pip.register_agent(): agent = {agent}')
 
     if agent is None:
         # validate that the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path
@@ -65,8 +71,11 @@ def register_agent(request, aa_id: str):
 
     # make a token and persist it...
     agent.bearer_token = Base64Encoder.encode(random(size=64)).decode()
+
+
     try:
         agent.save()
+
         return  JsonResponse({
             "agent-id": message["agent-id"],
             "token":    agent.bearer_token
@@ -81,7 +90,7 @@ def validate_auth_header(request) -> Optional[str]:
     matches = re.match(extractor, auth_header)
 
     if matches is None:
-        logger.error(f"Auth header did not parse: '{auth_header}'")
+        logger.error(f"validate_auth_header(): Auth header '{auth_header}' did not parse")
         return None
 
     return matches.group(1)
@@ -89,6 +98,8 @@ def validate_auth_header(request) -> Optional[str]:
 
 @csrf_exempt
 def agent_status(request, aa_id: str):
+    logger.info('**  drp_pip.agent_status()')
+
     # this method just looks to see that the bearer token is in the DB.
     bearer_token = validate_auth_header(request)
     if not bearer_token:
@@ -188,6 +199,8 @@ def get_status(request, request_id: str):
 def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> dict:
     # validate that the message is coming from the specified agent and destined to us in a reasonable time window 
     # returns the deserialized message or raises an exception
+
+    logger.info(f"**  validate_message_to_agent()")
 
     now = arrow.get()
 
