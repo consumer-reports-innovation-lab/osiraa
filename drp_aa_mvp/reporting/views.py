@@ -69,7 +69,7 @@ def test_exercise_endpoint(request_json, response):
         - SHOULD contain field “expected_by”
             - “expected_by” is an ISO 8601 string (ISO time format)
         - MAY contain field “reason” 
-            - “reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”
+            - “reason” allowable values: "need_verification" | "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”
             - allowable reason values vary with status; see below
         - MAY contain field “processing_details” 
             - TBD: any contstraint on this ... ?
@@ -126,7 +126,7 @@ def test_exercise_endpoint(request_json, response):
     contains_reason_field = test_contains_reason_field(response)
     test_results.append({'name': 'Contains field “reason”', 'result': contains_reason_field})
 
-    # test “reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”
+    # test “reason” allowable values: "need_verification" | "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”
     is_reason_valid = test_is_reason_valid(response)
     test_results.append({'name': 'Is “reason” valid', 'result': is_reason_valid})
 
@@ -342,7 +342,7 @@ def test_contains_reason_field(response):
 
 
 def test_is_reason_valid(response):
-    known_reason_values = [ 'need_verification', 'suspected_fraud', 'insufficient_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
+    known_reason_values = [ 'need_verification', 'suspected_fraud', 'insuf_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
 
     try:
         response_json = json.loads(response.text)
@@ -802,7 +802,7 @@ def test_is_reponse_valid_for_status_fulfilled(response):
 
 
 def test_is_reponse_valid_for_status_denied(response):
-    valid_reason_values = [ 'suspected_fraud', 'insufficient_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
+    valid_reason_values = [ 'suspected_fraud', 'insuf_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
 
     try:
         response_json = json.loads(response.text)
@@ -817,7 +817,7 @@ def test_is_reponse_valid_for_status_denied(response):
 
 
 def test_is_reponse_valid_for_status_expired(response, request):
-    valid_reason_values = [ 'suspected_fraud', 'insufficient_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
+    valid_reason_values = [ 'suspected_fraud', 'insuf_verification', 'no_match', 'claim_not_covered', 'too_many_requests', 'outside_jurisdiction', 'other', 'none' ]
 
     try:
         response_json = json.loads(response.text)

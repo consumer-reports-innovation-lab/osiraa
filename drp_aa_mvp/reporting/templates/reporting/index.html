@@ -65,7 +65,7 @@
                 <li>“status” allowable values: [ "in_progress" | "open" | "fulfilled" | "revoked" | "denied" | "expired" ]</li>
                 <li>allowable status values vary with action; see below</li>
                 <li>MAY contain field “reason”</li>
-                <li>“reason” allowable values: "need_verification" | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+                <li>“reason” allowable values: "need_verification" | "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
                 <li>allowable reason values vary with status; see below</li>
                 <li>MUST contain field “received_at”</li>
                 <li>“received_at” is an ISO 8601 string (ISO time format)</li>
@@ -186,7 +186,7 @@
         </li>
         <li>Data Rights Status object MAY contain “reason” field
             <ul>
-                <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+                <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
                 <li>allowable reason values vary with status; see below</li>
             </ul>
         </li>
@@ -220,7 +220,7 @@
 
     <p><b>3.2 &nbsp; GET /status denied</b></p>
     <ul>
-        <li>“reason” allowable values: "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+        <li>“reason” allowable values: "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
         <li>Additional fields: “processing_details”</li>
         <li>Final for all reasons except "too_many_requests"</li>
     </ul>
@@ -272,7 +272,7 @@
     </li>
     <li>Data Rights Status object MAY contain “reason” field
         <ul>   
-            <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insufficient_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
+            <li>“reason” allowable values: “need_verification” | "suspected_fraud" | “insuf_verification” | "no_match" | "claim_not_covered" | "too_many_requests" | "outside_jurisdiction" | "other" | “none”</li>
             <li>allowable reason values vary with status; see below</li>
         </ul>
     </li>
