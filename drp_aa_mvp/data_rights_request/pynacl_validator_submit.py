@@ -14,7 +14,7 @@ from nacl import signing
 from nacl.public import PrivateKey
 from nacl.encoding import Base64Encoder
 
-LOCAL_VALIDATOR_URL = "http://localhost:8000/data_rights_request/pynacl_validate"
+#LOCAL_VALIDATOR_URL = "http://localhost:8000/data_rights_request/pynacl_validate"
 
 
 # return a tuple with signing and verify key
@@ -79,7 +79,8 @@ def submit_signed_request(validator_url):
 
     return resp
 
-
+'''
 if __name__ == "__main__":
     print("Running...")
     print(submit_signed_request(LOCAL_VALIDATOR_URL))
+'''

@@ -103,7 +103,10 @@ service_directory_businesses_json = '''[
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
     logger.debug(f"OSIRAA_KEY_FILE is {os.path.realpath(path)}")
+
     if not os.path.exists(path):
+        logger.warn(f"WARNING: stored verify key not found, creating new one ...")
+
         with open(path, "w") as f:
            signing_key = signing.SigningKey.generate()
            verify_key = signing_key.verify_key
@@ -111,6 +114,11 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
                "signing_key": signing_key.encode(encoder=Base64Encoder).decode(),
                "verify_key": verify_key.encode(encoder=Base64Encoder).decode()
            }, f)
+
+        logger.warn(f"**  new verify key = {verify_key_b64}")
+
+        verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
+        logger.warn(f"**  newverify_key_b64 = {verify_key_b64}")
 
     with open(path, "r") as f:
         jason = json.load(f)
