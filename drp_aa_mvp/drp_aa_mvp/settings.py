@@ -125,6 +125,26 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# Authorized Agent ID and Name
+# Should match entries in service directory
+AUTORIZED_AGENT_ID = "CR_AA_DRP_ID_001_LOCAL"
+AUTORIZED_AGENT_NAME =  "OSIRAA Local Test Instance"
+WEB_URL =  "http://127.0.0.1:8003",
+
+# Authorized Agent Signing Key (64-bit encoded).  Must remain secret.
+AGENT_SIGNING_KEY_B64 = '098LMB1ayJW1N45oQ4J22ddU96gXr3/x5hEmKnPFpP0'
+
+# Authorized Agent Verify Key (64-bit encoded)
+# This is the public verify key for use in sending DRP requests to CB and PIP partners. 
+# It must match the key decalared in the Service Directory, or else partners' attempt 
+# to validate DRP messages they receive will fail
+AGENT_VERIFY_KEY_B64 = 'jkX15E7+NA/0E7K5YAp7+GndMP6/Fa0dJJYyr1GJPoQ='
+
+SERVICE_DIRECTORY_AGENT_URL = 'https://discovery.datarightsprotocol.org/agents.json'
+SERVICE_DIRECTORY_BUSINESS_URL = 'https://discovery.datarightsprotocol.org/businesses.json'
+
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 

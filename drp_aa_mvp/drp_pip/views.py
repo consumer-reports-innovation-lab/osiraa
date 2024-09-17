@@ -72,7 +72,6 @@ def register_agent(request, aa_id: str):
     # make a token and persist it...
     agent.bearer_token = Base64Encoder.encode(random(size=64)).decode()
 
-
     try:
         agent.save()
 

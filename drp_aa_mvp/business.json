@@ -1,0 +1,39 @@
+[
+    {
+        "id": "onetrust_staging_001",
+        "name": "OneTrust Test Instance",
+        "logo": "",
+        "api_base": "https://staging.1trust.ninja/api/datasubject/v2/crp",
+        "supported_actions": [
+            "access",
+            "deletion"
+        ],
+        "web_url": "https://onetrust.com",
+        "technical_contact": "fixme",
+        "business_contact": "fixme"
+    },
+    {
+        "id": "TRANSCEND_TEST_001",
+        "name": "Transcend Test Instance",
+        "logo": "",
+        "api_base": "https://drp.staging.transcen.dental",
+        "supported_actions": [
+            "access"
+        ],
+        "web_url": "https://transcend.io",
+        "technical_contact": "",
+        "business_contact": ""
+    },
+       {
+        "id": "Test_Entry_007",
+        "name": "Testy McTest Instance",
+        "logo": "",
+        "api_base": "https://test.foo.com",
+        "supported_actions": [
+            "access"
+        ],
+        "web_url": "https://test.foo.com",
+        "technical_contact": "",
+        "business_contact": ""
+    }
+]

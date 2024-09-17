@@ -1,105 +1,89 @@
+import arrow
 import base64
 import datetime
 import json
 import os
 import re
+import requests
+import validators
+
 from typing import Optional, Tuple
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-import arrow
-import requests
-import validators
-from covered_business.models import CoveredBusiness
+from django.conf import settings
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+
 from nacl import signing
 from nacl.encoding import Base64Encoder
 from nacl.public import PrivateKey
-from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
-                             test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
-from user_identity.models import IdentityUser
 
 from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
                      DrpRequestTransaction, IdentityPayload)
 
+from covered_business.models import CoveredBusiness
+from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
+                             test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
+from user_identity.models import IdentityUser
+
 import drp_pip.models
 
-#root_utl = os.environ['REQUEST_URI']
-#print (f"**  root_url = {root_utl}")
 
-auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
+auth_agent_drp_id           = settings.AUTORIZED_AGENT_ID
+auth_agent_drp_name         = settings.AUTORIZED_AGENT_NAME
+auth_agent_callback_url     = 'http://127.0.0.1:8003/update_status' #settings.WEB_URL + '/update_status'
 
-# todo: make this work for both local and deployed instances ...
-auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
+# we now get the (b64-encoded) keys from environment vars (or the vault if the app is deployed)
+# instead of trying to retreive them from a file and regeenrating them if that fails
+# signing key must remain secret
+auth_agent_signing_key = settings.AGENT_SIGNING_KEY_B64
 
-service_directory_agents_url      = 'https://discovery.datarightsprotocol.org/agents.json'
-service_directory_businesses_url  = 'https://discovery.datarightsprotocol.org/businesses.json'
+# verify key must match the key stored in the service directory
+auth_agent_verify_key  = settings.AGENT_VERIFY_KEY_B64
 
-# for local testing ...
-"""
-service_directory_agents_json = [
-    {
-        "id": "CR_AA_DRP_ID_001",
-        "name": "OSIRAA Prod Instance",
-        "verify_key": "aa3543a2fa54a9c977c416077ed28ecb651f6465f30d85fe342ab27c0b29e689",
-        "web_url": "https://osiraa.datarightsprotocol.org",
-        "technical_contact": "john.szinger@consumer.org",
-        "business_contact": "ginny.fahs@consumer.org",
-        "identity_assurance_url": "https://permissionslipcr.com/XXX"
-    }
-]
 
-# for local testing ...
-service_directory_businesses_json = '''[
-    {
-        "id": "onetrust_staging_001",
-        "name": "OneTrust Test Instance",
-        "logo": "",
-        "api_base": "https://staging.1trust.ninja/api/datasubject/v2/crp",
-        "supported_actions": [
-            "access",
-            "deletion"
-        ],
-        "web_url": "https://onetrust.com",
-        "technical_contact": "fixme",
-        "business_contact": "fixme"
-    },
-    {
-        "id": "TRANSCEND_TEST_001",
-        "name": "Transcend Test Instance",
-        "logo": "",
-        "api_base": "https://drp.staging.transcen.dental",
-        "supported_actions": [
-            "access"
-        ],
-        "web_url": "https://transcend.io",
-        "technical_contact": "",
-        "business_contact": ""
-    },
-       {
-        "id": "Test_Entry_007",
-        "name": "Testy McTest Instance",
-        "logo": "",
-        "api_base": "https://test.foo.com",
-        "supported_actions": [
-            "access"
-        ],
-        "web_url": "https://test.foo.com",
-        "technical_contact": "",
-        "business_contact": ""
-    }
-]
-'''
-"""
+
+# todo: is any of this necessary ...?
+'''  '' '
+def encode_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
+    return (signing.SigningKey(auth_agent_signing_key, encoder=Base64Encoder),
+            signing.VerifyKey(auth_agent_verify_key, encoder=Base64Encoder))
+
+signing_key, verify_key = encode_keys() 
+
+logger.debug(f"signing_key = {signing_key}")
+logger.debug(f"verify_key = {verify_key}")
+
+# the public key and signing key as b64 strings
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
+verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
+'' '  '''
+
+
+logger.info(f"****  drp_aa_mvp.data_rights_request.views.py - APP STARTUP  ****")
+logger.info(f"auth_agent_drp_id         = {auth_agent_drp_id}")
+logger.info(f"auth_agent_drp_name       = {auth_agent_drp_name}")
+logger.info(f"auth_agent_callback_url   = {auth_agent_callback_url}")
+logger.info(f"auth_agent_signing_key    = {auth_agent_signing_key}")
+logger.info(f"auth_agent_verify_key     = {auth_agent_verify_key}")
+
+service_directory_agents_url      = settings.SERVICE_DIRECTORY_AGENT_URL
+service_directory_businesses_url  = settings.SERVICE_DIRECTORY_BUSINESS_URL
+
+logger.info(f"service_directory_agents_url     = {service_directory_agents_url}")
+logger.info(f"service_directory_businesses_url     = {service_directory_businesses_url}")
+
+selected_covered_biz: Optional[CoveredBusiness] = None
+
 
 # AA keys should be generated offline before we start using the app and fetched from 
 # the service directory, which will be a part of this django app, along with OSIRPIP,
-# for now we'll generate the keys one-time only
-# todo: why do we b64 encode then decode ?
+# this is a legacy method to generate the keys one-time only
+'''
 def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
     path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
     logger.debug(f"OSIRAA_KEY_FILE is {os.path.realpath(path)}")
@@ -110,31 +94,36 @@ def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
         with open(path, "w") as f:
            signing_key = signing.SigningKey.generate()
            verify_key = signing_key.verify_key
+
            json.dump({
                "signing_key": signing_key.encode(encoder=Base64Encoder).decode(),
                "verify_key": verify_key.encode(encoder=Base64Encoder).decode()
            }, f)
 
-        logger.warn(f"**  new verify key = {verify_key_b64}")
+        logger.warn(f"**  new verify key = {verify_key}")
 
         verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
-        logger.warn(f"**  newverify_key_b64 = {verify_key_b64}")
+        logger.warn(f"**  new verify_key_b64 = {verify_key_b64}")
 
     with open(path, "r") as f:
-        jason = json.load(f)
-        return (signing.SigningKey(jason["signing_key"], encoder=Base64Encoder),
-                signing.VerifyKey(jason["verify_key"], encoder=Base64Encoder))
+        keys_json = json.load(f)
 
+        return (signing.SigningKey(keys_json["signing_key"], encoder=Base64Encoder),
+                signing.VerifyKey(keys_json["verify_key"], encoder=Base64Encoder))
 
 signing_key, verify_key = load_pynacl_keys()
 
+logger.debug(f"**  load_pynacl_keys()  **")
+logger.debug(f"signing_key = {signing_key}")
+logger.debug(f"verify_key = {verify_key}")
 
 # the public key and signing key as b64 strings
-signing_key_b64 = signing_key.encode(encoder=Base64Encoder)  # secret, never shared, remains with AA model
-verify_key_b64 = verify_key.encode(encoder=Base64Encoder)    # base64 encoded verify key to be stored in the service directory
-logger.debug(f"verify_key_b64 = {verify_key_b64}")
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
+verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
 
-selected_covered_biz: Optional[CoveredBusiness] = None
+logger.debug(f"signing_key_b64 = {signing_key_b64}")
+logger.debug(f"verify_key_b64 = {verify_key_b64}")
+'''
 
 
 def index(request):
@@ -217,20 +206,18 @@ def setup_pairwise_key(request):
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
-    signed_request  = sign_request(signing_key, request_obj)
+    signed_request  = sign_request(auth_agent_signing_key, request_obj)
 
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
         pairwise_setup_test_results = test_pairwise_key_setup_endpoint(request_obj, response)
 
-        # todo: should we use the raw keys or the b64 encoded keys here ... ?
-        set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key)
+        set_covered_biz_pairwise_key_params(covered_biz, response)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'request_obj':      request_obj,
             'signed_request':   signed_request,
             'response_code':    response.status_code,
@@ -242,8 +229,7 @@ def setup_pairwise_key(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'request_obj':      request_obj,
             'signed_request':   signed_request,
             'response_code':    'invalid url for /create_pairwise_key, no response',
@@ -268,8 +254,7 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     agent_info_test_results,
@@ -279,8 +264,7 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -305,7 +289,7 @@ def send_request_exercise_rights(request):
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
     request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
-    signed_request  = sign_request(signing_key, request_json)
+    signed_request  = sign_request(auth_agent_signing_key, request_json)
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -316,8 +300,7 @@ def send_request_exercise_rights(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
-                'verify_key_raw':   verify_key,
-                'verify_key_b64':   verify_key_b64,
+                'agent_verify_key': auth_agent_verify_key,
                 'request_obj':      request_json,
                 'signed_request':   signed_request,
                 'response_code':    response.status_code,
@@ -338,8 +321,7 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    response.status_code,
@@ -351,8 +333,7 @@ def send_request_exercise_rights(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    'invalid url for /excecise , no response',
@@ -382,8 +363,7 @@ def send_request_get_status(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      response.request.url,
-                'verify_key_raw':   verify_key,
-                'verify_key_b64':   verify_key_b64,
+                'agent_verify_key': auth_agent_verify_key,
                 'response_code':    response.status_code,
                 'response_payload': response.text,
                 'test_results':     status_test_results
@@ -392,8 +372,7 @@ def send_request_get_status(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
-                'verify_key_raw':   verify_key,
-                'verify_key_b64':   verify_key_b64,
+                'agent_verify_key': auth_agent_verify_key,
                 'response_code':    'invalid url for /status , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -402,8 +381,7 @@ def send_request_get_status(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -424,7 +402,7 @@ def send_request_revoke(request):
         reason          = "I don't want my account deleted."
         request_url     =  "/v1/data-rights-request/" + str(request_id)
         request_json    = create_revoke_request_json(reason)
-        signed_request  = sign_request(signing_key, request_json)
+        signed_request  = sign_request(auth_agent_signing_key, request_json)
 
         if (validators.url(request_url)):
             response = post_revoke(request_url, bearer_token, signed_request)
@@ -444,8 +422,7 @@ def send_request_revoke(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
-                'verify_key_raw':   verify_key,
-                'verify_key_b64':   verify_key_b64,
+                'agent_verify_key': auth_agent_verify_key,
                 'request_obj':      request_json,
                 'signed_request':   signed_request,
                 'response_code':    'invalid url for /revoke , no response',
@@ -456,8 +433,7 @@ def send_request_revoke(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
-            'verify_key_raw':   verify_key,
-            'verify_key_b64':   verify_key_b64,
+            'agent_verify_key': auth_agent_verify_key,
             'request_obj':      request_json,
             'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
@@ -597,8 +573,8 @@ def create_setup_pairwise_key_request_json(covered_biz_id):
 
     return request_json
 
-# todo: should be passing in the raw key or the b64 encoded key?  confirm we're doing it correctly ...
-def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key):
+
+def set_covered_biz_pairwise_key_params(covered_biz, response):
     try:
         json.loads(response.text)
     except ValueError as e:
@@ -618,7 +594,7 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
         covered_biz.save()
 
     except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing token **')
         return False
 
 
