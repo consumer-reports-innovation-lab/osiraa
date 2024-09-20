@@ -18,4 +18,7 @@
     First select a PIP or Covered Business from the dropdown. You can then test the API endpoints for that PIP/CB for the following calls:  Discover, Exercise and Status.  Some calls require additional parameters such as a User or Covered Regime.  These can be set via dropdowns above the button in each section to trigger the call.  Users (Identity Users) can be configured in the Admin Tool.</p>  
 
     <p>Once the call is made, the app presents an analysis of the response. It shows the request url, the response code, and the response payload.  If the the response is valid json, it test for required fields, fields in the response specific to the request params, etc.  Note that you must first call Exercise for a given PIP/User combination before you can call Status.  This is because the Exercise call returns a request_id, which is used for subsequent Status calls.</p>
+
+    <p><a href="/agent_keys/"><b>Generate Agent Auth Keys</b></a><br/>
+    Every Auhorized Agent requires a pair of auth keys - the secret signing key and the public verify key - to function in the DRP ecosystem.  For memebers of the DRP consortium, the public key is published in the Service Directory for Authorized Agents at <a href="https://discovery.datarightsprotocol.org/agents.json">https://discovery.datarightsprotocol.org/agents.json</a>.  This utility will generate a pair of secure keys in compliance with the technical requirements of the DRP spec for use in your app.</p>
 </div>

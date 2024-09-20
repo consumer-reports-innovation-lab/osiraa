@@ -23,6 +23,7 @@ import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('admin/', admin.site.urls),
+    path('agent_keys/', include('agent_keys.urls')),
     path('user_identity/', include('user_identity.urls')),
     path('covered_business/', include('covered_business.urls')),
     path('data_rights_request/', include('data_rights_request.urls')),
