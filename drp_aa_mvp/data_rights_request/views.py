@@ -63,19 +63,17 @@ signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
 verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
 '' '  '''
 
-
-logger.info(f"****  drp_aa_mvp.data_rights_request.views.py - APP STARTUP  ****")
-logger.info(f"auth_agent_drp_id         = {auth_agent_drp_id}")
-logger.info(f"auth_agent_drp_name       = {auth_agent_drp_name}")
-logger.info(f"auth_agent_callback_url   = {auth_agent_callback_url}")
-logger.info(f"auth_agent_signing_key    = {auth_agent_signing_key}")
-logger.info(f"auth_agent_verify_key     = {auth_agent_verify_key}")
+logger.info(f"**  auth_agent_drp_id         = {auth_agent_drp_id}")
+logger.info(f"**  auth_agent_drp_name       = {auth_agent_drp_name}")
+logger.info(f"**  auth_agent_callback_url   = {auth_agent_callback_url}")
+logger.info(f"**  auth_agent_signing_key    = {auth_agent_signing_key}")
+logger.info(f"**  auth_agent_verify_key     = {auth_agent_verify_key}")
 
 service_directory_agents_url      = settings.SERVICE_DIRECTORY_AGENT_URL
 service_directory_businesses_url  = settings.SERVICE_DIRECTORY_BUSINESS_URL
 
-logger.info(f"service_directory_agents_url     = {service_directory_agents_url}")
-logger.info(f"service_directory_businesses_url     = {service_directory_businesses_url}")
+logger.info(f"**  service_directory_agents_url     = {service_directory_agents_url}")
+logger.info(f"**  service_directory_businesses_url = {service_directory_businesses_url}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 

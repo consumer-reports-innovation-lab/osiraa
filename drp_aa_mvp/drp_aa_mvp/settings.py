@@ -133,7 +133,7 @@ AUTORIZED_AGENT_NAME =  "OSIRAA Local Test Instance"
 WEB_URL =  "http://127.0.0.1:8003",
 
 # Authorized Agent Signing Key (64-bit encoded).  Must remain secret.
-AGENT_SIGNING_KEY_B64 = '098LMB1ayJW1N45oQ4J22ddU96gXr3/x5hEmKnPFpP0'
+AGENT_SIGNING_KEY_B64 = '098LMB1ayJW1N45oQ4J22ddU96gXr3/x5hEmKnPFpP0='
 
 # Authorized Agent Verify Key (64-bit encoded)
 # This is the public verify key for use in sending DRP requests to CB and PIP partners. 

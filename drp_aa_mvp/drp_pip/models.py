@@ -46,7 +46,7 @@ class AuthorizedAgent(models.Model):
         try:
             response_json = json.loads(response.text)
         except ValueError as e:
-            logging.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
+            logging.warn('**  WARNING - refresh_service_directory(): NOT valid json  **')
             return False 
 
         # loop thru entries and update the CB's in the DB
