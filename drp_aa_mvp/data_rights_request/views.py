@@ -33,8 +33,8 @@ from user_identity.models import IdentityUser
 import drp_pip.models
 
 
-auth_agent_drp_id           = settings.AUTORIZED_AGENT_ID
-auth_agent_drp_name         = settings.AUTORIZED_AGENT_NAME
+auth_agent_drp_id           = settings.AUTHORIZED_AGENT_ID
+auth_agent_drp_name         = settings.AUTHORIZED_AGENT_NAME
 auth_agent_callback_url     = 'http://127.0.0.1:8003/update_status' #settings.WEB_URL + '/update_status'
 
 # we now get the (b64-encoded) keys from environment vars (or the vault if the app is deployed)
