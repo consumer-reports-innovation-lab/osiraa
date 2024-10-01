@@ -37,21 +37,22 @@ auth_agent_drp_id           = settings.AUTHORIZED_AGENT_ID
 auth_agent_drp_name         = settings.AUTHORIZED_AGENT_NAME
 auth_agent_callback_url     = 'http://127.0.0.1:8003/update_status' #settings.WEB_URL + '/update_status'
 
-# we now get the (b64-encoded) keys from environment vars (or the vault if the app is deployed)
-# instead of trying to retreive them from a file and regeenrating them if that fails
+
+# get the (b64-encoded) keys from environment vars (or the vault if the app is deployed) ...
 # signing key must remain secret
-auth_agent_signing_key = settings.AGENT_SIGNING_KEY_B64
+settings_signing_key = settings.AGENT_SIGNING_KEY_B64
 
 # verify key must match the key stored in the service directory
-auth_agent_verify_key  = settings.AGENT_VERIFY_KEY_B64
+settings_verify_key  = settings.AGENT_VERIFY_KEY_B64
+
+logger.info(f"**  settings_signing_key = {settings_signing_key}")
+logger.info(f"**  settings_verify_key = {settings_verify_key}")
 
 
-
-# todo: is any of this necessary ...?
-'''  '' '
+# create encoded keys from the strings loaded in from the settings ...
 def encode_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
-    return (signing.SigningKey(auth_agent_signing_key, encoder=Base64Encoder),
-            signing.VerifyKey(auth_agent_verify_key, encoder=Base64Encoder))
+    return (signing.SigningKey(settings_signing_key, encoder=Base64Encoder),
+            signing.VerifyKey(settings_verify_key, encoder=Base64Encoder))
 
 signing_key, verify_key = encode_keys() 
 
@@ -60,8 +61,11 @@ logger.debug(f"verify_key = {verify_key}")
 
 # the public key and signing key as b64 strings
 signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
-verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
-'' '  '''
+verify_key_b64  = verify_key.encode(encoder=Base64Encoder) 
+
+auth_agent_signing_key = signing_key_b64
+auth_agent_verify_key  = verify_key_b64
+
 
 logger.info(f"**  auth_agent_drp_id         = {auth_agent_drp_id}")
 logger.info(f"**  auth_agent_drp_name       = {auth_agent_drp_name}")
@@ -204,7 +208,7 @@ def setup_pairwise_key(request):
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
-    signed_request  = sign_request(auth_agent_signing_key, request_obj)
+    signed_request  = sign_request(signing_key, request_obj)
 
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
@@ -263,7 +267,7 @@ def get_agent_information(request):
             'covered_biz':      covered_biz,
             'request_url':      request_url,
             'agent_verify_key': auth_agent_verify_key,
-            'response_code':    'invalid url for /create_pairwise_key, no response',
+            'response_code':    'invalid url for /get_agent_information, no response',
             'response_payload': '',
             'test_results':     [],
         }
@@ -287,7 +291,7 @@ def send_request_exercise_rights(request):
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
     request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
-    signed_request  = sign_request(auth_agent_signing_key, request_json)
+    signed_request  = sign_request(signing_key, request_json)
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -400,7 +404,7 @@ def send_request_revoke(request):
         reason          = "I don't want my account deleted."
         request_url     =  "/v1/data-rights-request/" + str(request_id)
         request_json    = create_revoke_request_json(reason)
-        signed_request  = sign_request(auth_agent_signing_key, request_json)
+        signed_request  = sign_request(signing_key, request_json)
 
         if (validators.url(request_url)):
             response = post_revoke(request_url, bearer_token, signed_request)
