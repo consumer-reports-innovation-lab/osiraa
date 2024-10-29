@@ -2,8 +2,7 @@ import arrow
 import base64
 import datetime
 import json
-import os
-import re
+import re           # regex library
 import requests
 import validators
 
@@ -56,8 +55,8 @@ def encode_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
 
 signing_key, verify_key = encode_keys() 
 
-logger.debug(f"signing_key = {signing_key}")
-logger.debug(f"verify_key = {verify_key}")
+#logger.debug(f"signing_key = {signing_key}")
+#logger.debug(f"verify_key = {verify_key}")
 
 # the public key and signing key as b64 strings
 signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
@@ -80,52 +79,6 @@ logger.info(f"**  service_directory_agents_url     = {service_directory_agents_u
 logger.info(f"**  service_directory_businesses_url = {service_directory_businesses_url}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
-
-
-# AA keys should be generated offline before we start using the app and fetched from 
-# the service directory, which will be a part of this django app, along with OSIRPIP,
-# this is a legacy method to generate the keys one-time only
-'''
-def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
-    path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
-    logger.debug(f"OSIRAA_KEY_FILE is {os.path.realpath(path)}")
-
-    if not os.path.exists(path):
-        logger.warn(f"WARNING: stored verify key not found, creating new one ...")
-
-        with open(path, "w") as f:
-           signing_key = signing.SigningKey.generate()
-           verify_key = signing_key.verify_key
-
-           json.dump({
-               "signing_key": signing_key.encode(encoder=Base64Encoder).decode(),
-               "verify_key": verify_key.encode(encoder=Base64Encoder).decode()
-           }, f)
-
-        logger.warn(f"**  new verify key = {verify_key}")
-
-        verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
-        logger.warn(f"**  new verify_key_b64 = {verify_key_b64}")
-
-    with open(path, "r") as f:
-        keys_json = json.load(f)
-
-        return (signing.SigningKey(keys_json["signing_key"], encoder=Base64Encoder),
-                signing.VerifyKey(keys_json["verify_key"], encoder=Base64Encoder))
-
-signing_key, verify_key = load_pynacl_keys()
-
-logger.debug(f"**  load_pynacl_keys()  **")
-logger.debug(f"signing_key = {signing_key}")
-logger.debug(f"verify_key = {verify_key}")
-
-# the public key and signing key as b64 strings
-signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
-verify_key_b64 = verify_key.encode(encoder=Base64Encoder) 
-
-logger.debug(f"signing_key_b64 = {signing_key_b64}")
-logger.debug(f"verify_key_b64 = {verify_key_b64}")
-'''
 
 
 def index(request):
@@ -563,15 +516,19 @@ def sign_request(signing_key, request_obj):
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
-    issued_time     = arrow.get()
-    expires_time    = issued_time.shift(minutes=15)
+    issued_time         = datetime.datetime.now()
+    expires_time        = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_json = {
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz_id,
-        "expires-at":   str(expires_time),
-        "issued-at":    str(issued_time),
+        "issued-at":    issued_timestamp,
+        "expires-at":   expires_timestamp,
     }
+
+    #logger.info(f"**  create_setup_pairwise_key_request_json(): request_json = {request_json}")
 
     return request_json
 
@@ -602,14 +559,18 @@ def set_covered_biz_pairwise_key_params(covered_biz, response):
 
 def create_agent_key_setup_json(agent_id, business_id):
     issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(min=15)  # 15 minutes from now
+    expires_time    = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp = expires_time.isoformat(timespec='milliseconds')
 
     agent_key_setup_json = {
         "agent-id": agent_id,
         "business-id": business_id,
-        "expires-at": expires_time,
-        "issued-at": issued_time
+        "issued-at": issued_timestamp,
+        "expires-at": expires_timestamp,
     }
+    
+    #logger.info(f"**  create_agent_key_setup_json(): agent_key_setup_json = {agent_key_setup_json}")
 
     return agent_key_setup_json
 
@@ -634,15 +595,17 @@ def set_agent_info_params(response):
 #--------------------------------------------------------------------------------------------------#
 
 def create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-    issued_time     = arrow.get()
-    expires_time    = issued_time.shift(days=45)
+    issued_time         = datetime.datetime.now()
+    expires_time        = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_obj = {
         # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
-        "issued-at":    str(issued_time),
-        "expires-at":   str(expires_time),
+        "issued-at":    issued_timestamp,
+        "expires-at":   expires_timestamp,
 
         # 2
         "drp.version": "0.9.3",
@@ -663,6 +626,8 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         "address": user_identity.get_address(),
         "address_verified": user_identity.address_verified,
     }
+
+    #logger.debug(f"**  create_exercise_request_json(): request_obj = {request_obj}")
 
     return request_obj
 
@@ -710,7 +675,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         processing_details      = response_json.get('processing_details'),
         reason                  = response_json.get('reason'),
         user_verification_url   = response_json.get('user_verification_url'),
-        # these fields need to be coerced to a datetime from arbitrary timestamps
+        # coerce to a datetime object from timestamp string
         received_at             = enrich_date(response_json.get('received_at')),
         expected_by             = enrich_date(response_json.get('expected_by')),
         # expires_at?
@@ -733,13 +698,11 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
 
 
 def enrich_date(dt: Optional[str]):
-    '''
-    arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
-
-    additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
-    '''
+    # arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
     if dt is None:
         return None
+
+    # additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
     if re.search(r'-[0-9]{4}$', dt):
         dt = dt[:-5] # sickos.jpg
 

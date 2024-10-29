@@ -155,7 +155,6 @@ def exercise(request: HttpRequest):
         # processing_details      = response_json.get('processing_details'),
         # reason                  = response_json.get('reason'),
         # user_verification_url   = response_json.get('user_verification_url'),
-        # these fields need to be coerced to a datetime from arbitrary timestamps
         received_at             = str(arrow.get())
         # expected_by             = enrich_date(response_json.get('expected_by')),
     )
