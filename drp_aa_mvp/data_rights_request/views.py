@@ -1,6 +1,7 @@
 import arrow
 import base64
-import datetime
+from datetime import datetime, timezone, timedelta
+
 import json
 import re           # regex library
 import requests
@@ -64,7 +65,6 @@ verify_key_b64  = verify_key.encode(encoder=Base64Encoder)
 
 auth_agent_signing_key = signing_key_b64
 auth_agent_verify_key  = verify_key_b64
-
 
 logger.info(f"**  auth_agent_drp_id         = {auth_agent_drp_id}")
 logger.info(f"**  auth_agent_drp_name       = {auth_agent_drp_name}")
@@ -516,8 +516,8 @@ def sign_request(signing_key, request_obj):
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
-    issued_time         = datetime.datetime.now()
-    expires_time        = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_time         = datetime.now(timezone.utc)
+    expires_time        = issued_time + timedelta(minutes=15)  # 15 minutes from now
     issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
     expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
@@ -558,8 +558,8 @@ def set_covered_biz_pairwise_key_params(covered_biz, response):
 
 
 def create_agent_key_setup_json(agent_id, business_id):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_time     = datetime.now(timezone.utc)
+    expires_time    = issued_time + timedelta(minutes=15)  # 15 minutes from now
     issued_timestamp = issued_time.isoformat(timespec='milliseconds')
     expires_timestamp = expires_time.isoformat(timespec='milliseconds')
 
@@ -595,8 +595,8 @@ def set_agent_info_params(response):
 #--------------------------------------------------------------------------------------------------#
 
 def create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-    issued_time         = datetime.datetime.now()
-    expires_time        = issued_time + datetime.timedelta(minutes=15)  # 15 minutes from now
+    issued_time         = datetime.now(timezone.utc)
+    expires_time        = issued_time + timedelta(minutes=15)  # 15 minutes from now
     issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
     expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
