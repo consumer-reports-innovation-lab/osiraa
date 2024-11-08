@@ -35,7 +35,10 @@ import drp_pip.models
 
 auth_agent_drp_id           = settings.AUTHORIZED_AGENT_ID
 auth_agent_drp_name         = settings.AUTHORIZED_AGENT_NAME
-auth_agent_callback_url     = 'http://127.0.0.1:8003/update_status' #settings.WEB_URL + '/update_status'
+auth_agent_callback_url     = settings.WEB_URL + '/update_status'  #'http://127.0.0.1:8003/update_status'
+
+service_directory_agents_url      = settings.SERVICE_DIRECTORY_AGENT_URL
+service_directory_businesses_url  = settings.SERVICE_DIRECTORY_BUSINESS_URL
 
 
 # get the (b64-encoded) keys from environment vars (or the vault if the app is deployed) ...
@@ -47,7 +50,6 @@ settings_verify_key  = settings.AGENT_VERIFY_KEY_B64
 
 logger.info(f"**  settings_signing_key = {settings_signing_key}")
 logger.info(f"**  settings_verify_key = {settings_verify_key}")
-
 
 # create encoded keys from the strings loaded in from the settings ...
 def encode_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
@@ -72,11 +74,6 @@ logger.info(f"**  auth_agent_callback_url   = {auth_agent_callback_url}")
 logger.info(f"**  auth_agent_signing_key    = {auth_agent_signing_key}")
 logger.info(f"**  auth_agent_verify_key     = {auth_agent_verify_key}")
 
-service_directory_agents_url      = settings.SERVICE_DIRECTORY_AGENT_URL
-service_directory_businesses_url  = settings.SERVICE_DIRECTORY_BUSINESS_URL
-
-logger.info(f"**  service_directory_agents_url     = {service_directory_agents_url}")
-logger.info(f"**  service_directory_businesses_url = {service_directory_businesses_url}")
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
