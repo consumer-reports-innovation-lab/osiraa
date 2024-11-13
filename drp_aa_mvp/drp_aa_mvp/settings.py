@@ -127,8 +127,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Authorized Agent ID and Name
-# Should match entries in service directory
+# Authorized Agent ID and Name, should match entries in service directory
 AUTHORIZED_AGENT_ID = get('AUTHORIZED_AGENT_ID', 'CR_AA_DRP_ID_001_LOCAL')
 AUTHORIZED_AGENT_NAME = get('AUTHORIZED_AGENT_NAME', 'OSIRAA Local Test Instance')
 WEB_URL = get('WEB_URL', 'http://127.0.0.1:8003')
@@ -145,6 +144,9 @@ AGENT_VERIFY_KEY_B64 = get('AGENT_VERIFY_KEY_B64', 'jkX15E7+NA/0E7K5YAp7+GndMP6/
 SERVICE_DIRECTORY_AGENT_URL = 'https://discovery.datarightsprotocol.org/agents.json'
 SERVICE_DIRECTORY_BUSINESS_URL = 'https://discovery.datarightsprotocol.org/businesses.json'
 
+# CB ID and Name for OSIRPIP 
+OSIRAA_PIP_CB_ID = get('OSIRAA_PIP_CB_ID', "osirpip-cb-local-01") 
+OSIRAA_PIP_CB_NAME = get('OSIRAA_PIP_CB_NAME', 'OSIRPIP Local Test Instance')
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

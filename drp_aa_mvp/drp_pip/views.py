@@ -1,3 +1,4 @@
+import arrow
 import base64
 import json
 import os
@@ -5,11 +6,12 @@ import re
 from typing import Optional
 import uuid
 
-import arrow
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse, HttpRequest
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from django.http import JsonResponse, HttpResponse, HttpRequest
+
 from nacl.encoding import Base64Encoder
 from nacl.signing import VerifyKey
 from nacl.utils import random
@@ -27,7 +29,8 @@ logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osiraa-local-001")
+OSIRAA_PIP_CB_ID   = settings.OSIRAA_PIP_CB_ID
+#OSIRAA_PIP_CB_ID  = os.environ.get("OSIRAA_PIP_CB_ID", "osirpip-cb-local-01")
 
 
 """
@@ -53,6 +56,8 @@ def agent(request, aa_id: str):
     
 
 @csrf_exempt
+# when an agent sends call to setup pairwise keys, it goes here.  
+# we validate their agent id and vefiry key, and return a bearer token
 def register_agent(request, aa_id: str):
     logger.info('**  drp_pip.register_agent()')
 
@@ -99,7 +104,7 @@ def validate_auth_header(request) -> Optional[str]:
 def agent_status(request, aa_id: str):
     logger.info('**  drp_pip.agent_status()')
 
-    # this method just looks to see that the bearer token is in the DB.
+    # this method just looks to see that the bearer token is in the DB ...
     bearer_token = validate_auth_header(request)
     if not bearer_token:
         return HttpResponse(status=403)
@@ -200,8 +205,6 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
 
     logger.info(f"**  validate_message_to_agent()")
 
-    now = arrow.get()
-
     aa_id = agent.aa_id
     
     # todo: verify this is the correctly encoded verify key
@@ -210,42 +213,62 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     # todo: what does this do?  why to we need to unencode it?
     verify_key = VerifyKey(verify_key_b64, encoder=Base64Encoder)
 
-    logger.debug(f"verify_key_b64 is {verify_key_b64}")
-    logger.debug(f"authourized_agent_id is {aa_id}")
-
+    logger.debug(f"**    authourized_agent_id is {aa_id}")
+    logger.debug(f"**    verify_key_b64 is {verify_key_b64}")
+    
     decoded = base64.b64decode(request.body)
-    logger.debug(f"decoded is {decoded}")
-    logger.debug(f"encoded is {request.body}")
+    #logger.debug(f"decoded is {decoded}")
+    #logger.debug(f"encoded is {request.body}")
+
+    #serialized_message = verify_key.verify(decoded)
+    #logger.debug(f"**    serialized_message = {serialized_message}")    
 
     try:
-        # don't need to do anything here -- if it doesn't raise it's verified!
         serialized_message = verify_key.verify(decoded)
+        logger.debug(f"**    serialized_message = {serialized_message}")
+
     except nacl.exceptions.BadSignatureError as e:
-        # Validate That the signature validates to the key associated with the out of band Authorized Agent identity presented in the request path.
-        logger.error(f"bad signature from {aa_id}: {e}")
+        # Validate the signature to the key associated with the out of band 
+        # Authorized Agent identity presented in the request path
+        logger.error(f"**  validate_message_to_agent(): bad signature from {aa_id}: {e}")
+
         raise e
 
     message = json.loads(serialized_message)
-
+    logger.debug(f"**    message = {message}")  
+    
     aa_id_claim = message["agent-id"]
     if aa_id_claim != aa_id:
-        # validate that the Authorized Agent specified in the agent-id claim in the request matches the Authorized Agent associated with the presented Bearer Token
-        raise MessageValidationException(f"outer aa {aa_id} doesn't match claim {aa_id_claim}!!")
+        # validate that the Authorized Agent specified in the agent-id claim in the request matches 
+        # the Authorized Agent associated with the presented Bearer Token
+        logger.error(f"**  validate_message_to_agent(): outer aa {aa_id} doesn't match claim {aa_id_claim}")
+
+        raise MessageValidationException(f"outer aa {aa_id} doesn't match claim {aa_id_claim}")
 
     business_id_claim = message["business-id"]
     if business_id_claim != OSIRAA_PIP_CB_ID:
         # validate that they are the Covered Business specified inside the business-id claim
+        logger.error(f"**  validate_message_to_agent(): claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
+
         raise MessageValidationException(f"claimed business-id {business_id_claim} does not match expected {OSIRAA_PIP_CB_ID}")
+
+    now = arrow.get()
 
     expires_at_claim = message["expires-at"]
     if now > arrow.get(expires_at_claim):
         # validate that the current time is after the Timestamp issued-at claim
         # todo: check that it's within like 15 minutes or so just to be sure the AA is compliant ... ?
+        logger.error(f"**  validate_message_to_agent(): message has expired {expires_at_claim}")
+
         raise MessageValidationException(f"Message has expired! {expires_at_claim}")
 
     issued_at_claim = message["issued-at"]
     if arrow.get(issued_at_claim) > now:
         # validate that the current time is before the Expiration expires-at claim
-        raise MessageValidationException(f"Message from the future??? {issued_at_claim}")
+        logger.error(f"**  validate_message_to_agent(): message from the future? {issued_at_claim}")
+
+        raise MessageValidationException(f"Message from the future? {issued_at_claim}")
+
+    logger.info(f"**  validate_message_to_agent(): message = {message}")
 
     return message

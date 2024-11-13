@@ -160,6 +160,8 @@ def setup_pairwise_key(request):
     request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
     signed_request  = sign_request(signing_key, request_obj)
 
+    logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
+
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
         pairwise_setup_test_results = test_pairwise_key_setup_endpoint(request_obj, response)
@@ -197,6 +199,9 @@ def get_agent_information(request):
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token or ""
+
+
+    logger.info('**  get_agent_information(): request_url = ' + request_url)
 
     if (validators.url(request_url)):
         response = get_agent(request_url, bearer_token)
@@ -236,6 +241,8 @@ def send_request_exercise_rights(request):
     # note - removed trailing slash
     request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
+
+    logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
 
     # todo: a missing param in the request_json could cause trouble ...
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
