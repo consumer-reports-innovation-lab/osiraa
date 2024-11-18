@@ -153,7 +153,7 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-def setup_pairwise_key(request):
+def setup_pairwise_key(request):   # a.k.a. regsiter agent
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
@@ -242,13 +242,16 @@ def send_request_exercise_rights(request):
     request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
-    logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
+    logger.info(f'**  setup_pairwise_key(): request_url = {request_url}')
 
     # todo: a missing param in the request_json could cause trouble ...
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
     request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
+    logger.info(f'**  setup_pairwise_key(): request_json = {request_json}')
+
     signed_request  = sign_request(signing_key, request_json)
+    logger.info(f'**  setup_pairwise_key(): signed_request = {signed_request}')
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)

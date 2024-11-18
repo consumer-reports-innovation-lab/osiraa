@@ -43,6 +43,7 @@ Privacy Infrastructure Providers MUST validate the message in this order:
 - That the current time is before the Expiration expires-at claim
 """
 
+# the /agent endpoint, supports two different methods GET and POST
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def agent(request, aa_id: str):
@@ -52,12 +53,12 @@ def agent(request, aa_id: str):
     if request.method == 'POST':
         return register_agent(request, aa_id)
     elif request.method == 'GET':
-        return agent_status(request, aa_id)
+        return agent_information(request, aa_id)
     
 
 @csrf_exempt
 # when an agent sends call to setup pairwise keys, it goes here.  
-# we validate their agent id and vefiry key, and return a bearer token
+# we validate their agent id and verify key, and return a bearer token
 def register_agent(request, aa_id: str):
     logger.info('**  drp_pip.register_agent()')
 
@@ -85,24 +86,26 @@ def register_agent(request, aa_id: str):
             "token":    agent.bearer_token
         })
     except:
-        return HttpResponse(b"Something went wonky! Token did not persist.", status=500)
+        return HttpResponse(b"Something went wrong, token did not persist.", status=500)
 
 
 def validate_auth_header(request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
-    extractor = r"Bearer ([a-zA-Z0-9=+\-_/]+)"
-    matches = re.match(extractor, auth_header)
+    extractor   = r"Bearer ([a-zA-Z0-9=+\-_/]+)"
+    matches     = re.match(extractor, auth_header)
 
     if matches is None:
         logger.error(f"validate_auth_header(): Auth header '{auth_header}' did not parse")
         return None
 
+    #logger.debug(f"**  validate_auth_header(): matches = {matches}")
+
     return matches.group(1)
 
 
 @csrf_exempt
-def agent_status(request, aa_id: str):
-    logger.info('**  drp_pip.agent_status()')
+def agent_information(request, aa_id: str):
+    logger.info('**  drp_pip.agent_information()')
 
     # this method just looks to see that the bearer token is in the DB ...
     bearer_token = validate_auth_header(request)
@@ -122,13 +125,41 @@ def agent_status(request, aa_id: str):
     return JsonResponse({})
 
 
+# the /exercise endpoint - POST only
 @csrf_exempt
 def exercise(request: HttpRequest):
+    logger.info('**  drp_pip.exercise()')
+
+    logger.debug(f"**  drp_pip.exercise(): request = {request}")
+
+    #  todo: why is the body empty when the message arrives ???
+    logger.info(f'**  drp_pip.exercise(): request.body = {request.body}')
+
+    logger.info(f'**  drp_pip.exercise(): data = {request.POST.data}')
+
+    body_str = request.body.decode();
+    logger.info(f'**  drp_pip.exercise(): body_str = {body_str}')
+
+    #bytestring = b'Hello, world!'
+    #string = bytestring.decode('utf-8') 
+
     bearer_token = validate_auth_header(request)
+
+    logger.info(f'**  drp_pip.exercise(): bearer_token = {bearer_token}')
+
     if not bearer_token:
         return HttpResponse(status=403)
 
     agent = AuthorizedAgent.fetch_by_bearer_token(bearer_token)
+
+    logger.info(f'**  drp_pip.exercise(): agent = {agent.name}')
+
+    logger.info(f'**  drp_pip.exercise(): request.body = {request.body}')   
+
+    #logger.info(f'**  drp_pip.exercise(): request.encoding = {request.encoding}')
+    #logger.info(f'**  drp_pip.exercise(): request.POST = {request.POST}')
+
+    #or, we can use HttpRequest.read() or even HttpRequest.POST
 
     try:
         message = validate_message_to_agent(agent, request)
@@ -213,18 +244,19 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     # todo: what does this do?  why to we need to unencode it?
     verify_key = VerifyKey(verify_key_b64, encoder=Base64Encoder)
 
-    logger.debug(f"**    authourized_agent_id is {aa_id}")
-    logger.debug(f"**    verify_key_b64 is {verify_key_b64}")
+    logger.debug(f"**    authourized_agent_id = {aa_id}")
+    logger.debug(f"**    verify_key_b64 = {verify_key_b64}")
     
-    decoded = base64.b64decode(request.body)
-    #logger.debug(f"decoded is {decoded}")
-    #logger.debug(f"encoded is {request.body}")
+    logger.debug(f"**    encoded request.body = {request.body}")
 
-    #serialized_message = verify_key.verify(decoded)
-    #logger.debug(f"**    serialized_message = {serialized_message}")    
+    decoded_body = request.body.decode()
+    logger.debug(f"**    decoded_body = {decoded_body}")
 
+    b64decoded_body = base64.b64decode(request.body)
+    logger.debug(f"**    b64decoded_body = {b64decoded_body}")
+    
     try:
-        serialized_message = verify_key.verify(decoded)
+        serialized_message = verify_key.verify(decoded_body)
         logger.debug(f"**    serialized_message = {serialized_message}")
 
     except nacl.exceptions.BadSignatureError as e:
