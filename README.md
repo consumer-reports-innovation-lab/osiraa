@@ -53,7 +53,7 @@ Clone the repo:
 
 ```
 git clone https://github.com/consumer-reports-innovation-lab/osiraa
-cd drp-aa-mvp
+cd drp_aa_mvp
 ```
 
 Note: some recent versions macOS have python 2.7 already installed. You'll need to install python3 seperately. In order to to execute commands against the correct python version, use python3 instead of python in the commands listed below.
