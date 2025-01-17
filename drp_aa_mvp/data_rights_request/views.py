@@ -1,64 +1,79 @@
+import arrow
 import base64
-import datetime
+from datetime import datetime, timezone, timedelta
+
 import json
-import os
-import re
+import re           # regex library
+import requests
+import validators
+
 from typing import Optional, Tuple
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-import arrow
-import requests
-import validators
-from covered_business.models import CoveredBusiness
+from django.conf import settings
 from django.core import serializers
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+
 from nacl import signing
-from nacl.encoding import HexEncoder
+from nacl.encoding import Base64Encoder
 from nacl.public import PrivateKey
-from reporting.views import (test_agent_information_endpoint, test_discovery_endpoint, test_excercise_endpoint,
-                             test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
-from user_identity.models import IdentityUser
 
 from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
                      DrpRequestTransaction, IdentityPayload)
 
-#root_utl = os.environ['REQUEST_URI']
-#print (f"****  root_url = {root_utl}")
+from covered_business.models import CoveredBusiness
+from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
+                             test_status_endpoint, test_revoked_endpoint, test_pairwise_key_setup_endpoint)
+from user_identity.models import IdentityUser
 
-auth_agent_drp_id       = os.environ.get('OSIRAA_AA_ID', 'CR_AA_DRP_ID_001')
-auth_agent_callback_url = "http://127.0.0.1:8001/update_status" #f"{os.environ.get('SERVER_NAME')}/update_status"
-
-# todo: these keys actually should be generated offline before we start using the app
-# and get them from the v0.0 service direcotry which will be a part of this dhango app, along with OSIRPIP
-# for now we'll generate the keys one-time only
-def load_pynacl_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
-    path = os.environ.get("OSIRAA_KEY_FILE", "./keys.json")
-    if not os.path.exists(path):
-        with open(path, "w") as f:
-           signing_key = signing.SigningKey.generate()
-           verify_key = signing_key.verify_key
-           json.dump({
-               "signing_key": signing_key.encode(encoder=HexEncoder).decode(),
-               "verify_key": verify_key.encode(encoder=HexEncoder).decode()
-           }, f)
-
-    with open(path, "r") as f:
-        jason = json.load(f)
-        return (signing.SigningKey(jason["signing_key"], encoder=HexEncoder),
-                signing.VerifyKey(jason["verify_key"], encoder=HexEncoder))
+import drp_pip.models
 
 
-signing_key, verify_key = load_pynacl_keys()
+auth_agent_drp_id           = settings.AUTHORIZED_AGENT_ID
+auth_agent_drp_name         = settings.AUTHORIZED_AGENT_NAME
+auth_agent_callback_url     = settings.WEB_URL + '/update_status'  #'http://127.0.0.1:8003/update_status'
 
+service_directory_agents_url      = settings.SERVICE_DIRECTORY_AGENT_URL
+service_directory_businesses_url  = settings.SERVICE_DIRECTORY_BUSINESS_URL
+
+
+# get the (b64-encoded) keys from environment vars (or the vault if the app is deployed) ...
+# signing key must remain secret
+settings_signing_key = settings.AGENT_SIGNING_KEY_B64
+
+# verify key must match the key stored in the service directory
+settings_verify_key  = settings.AGENT_VERIFY_KEY_B64
+
+logger.info(f"**  settings_signing_key = {settings_signing_key}")
+logger.info(f"**  settings_verify_key = {settings_verify_key}")
+
+# create encoded keys from the strings loaded in from the settings ...
+def encode_keys() -> Tuple[signing.SigningKey, signing.VerifyKey]:
+    return (signing.SigningKey(settings_signing_key, encoder=Base64Encoder),
+            signing.VerifyKey(settings_verify_key, encoder=Base64Encoder))
+
+signing_key, verify_key = encode_keys() 
+
+#logger.debug(f"signing_key = {signing_key}")
+#logger.debug(f"verify_key = {verify_key}")
 
 # the public key and signing key as b64 strings
-signing_key_hex = signing_key.encode(encoder=HexEncoder)  # remains secret, never shared, but remains with AA model
-verify_key_hex = verify_key.encode(encoder=HexEncoder)    # we're going to store hex encoded verify key in the service directory
-logger.debug(f"verify_key is {verify_key_hex}")
+signing_key_b64 = signing_key.encode(encoder=Base64Encoder)
+verify_key_b64  = verify_key.encode(encoder=Base64Encoder) 
+
+auth_agent_signing_key = signing_key_b64
+auth_agent_verify_key  = verify_key_b64
+
+logger.info(f"**  auth_agent_drp_id         = {auth_agent_drp_id}")
+logger.info(f"**  auth_agent_drp_name       = {auth_agent_drp_name}")
+logger.info(f"**  auth_agent_callback_url   = {auth_agent_callback_url}")
+logger.info(f"**  auth_agent_signing_key    = {auth_agent_signing_key}")
+logger.info(f"**  auth_agent_verify_key     = {auth_agent_verify_key}")
+
 
 selected_covered_biz: Optional[CoveredBusiness] = None
 
@@ -71,6 +86,48 @@ def index(request):
     context = {
         'user_identities':      user_identities,
         'covered_businesses':   covered_businesses,
+        'selected_covered_biz': selected_covered_biz,
+        'request_actions':      request_actions
+    }
+
+    return render(request, 'data_rights_request/index.html', context)
+
+
+# call to the service directory returns the info for all CB's, same as what was in the .well_known endpoint for each CB
+def refresh_service_directory_data (request):
+    request_url = service_directory_businesses_url
+    response = get_service_directory_covered_biz(request_url)
+
+    try:
+        response_json = json.loads(response.text)
+    except ValueError as e:
+        logger.warn('**  WARNING - refresh_service_directory_data(): NOT valid json  **')
+        return False 
+    
+    for response_item in response_json:
+        covered_biz_cb_id = str(response_item['id'])  # corresponds to cb_id in the CovereredBusiness model
+        covered_biz_id    = get_covered_biz_id_from_cb_id(covered_biz_cb_id)  # index to lookup the object
+
+        if covered_biz_id is not None:
+            covered_biz = CoveredBusiness.objects.get(pk=covered_biz_id)
+            set_covered_biz_params_from_service_directory(covered_biz, response_item)
+        else:
+            create_covered_biz_db_entry_from_service_directory_params(response_item)    
+     
+        # todo: handle case where SD enrty is removed - mark CB in DB as 'removed' ...
+
+    drp_pip.models.AuthorizedAgent.refresh_from_directory(service_directory_agents_url)
+
+    user_identities             = IdentityUser.objects.all()
+    covered_businesses          = CoveredBusiness.objects.all()
+    covered_biz_id              = request.POST.get('sel_covered_biz_id')
+    #selected_covered_biz        = CoveredBusiness.objects.get(pk=covered_biz_id)
+    #covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
+    request_actions             = get_request_actions_form_display(selected_covered_biz)
+
+    context = {
+        'user_identities':      user_identities,
+        'covered_businesses':   covered_businesses, #covered_biz_form_display,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
@@ -96,58 +153,27 @@ def select_covered_business(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-def send_request_discover_data_rights(request):
-    covered_biz_id  = request.POST.get('sel_covered_biz_id')
-    covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
-    request_url     = covered_biz.discovery_endpoint  # + ".well-known/data-rights.json"
-    bearer_token    = covered_biz.auth_bearer_token or ""
-
-    if (validators.url(request_url)):
-        unauthed_response = get_well_known(request_url)
-        response = get_well_known(request_url, bearer_token)
-        set_covered_biz_well_known_params(covered_biz, response)
-
-        discover_test_results = test_discovery_endpoint(request_url, {
-            'unauthed': unauthed_response,
-            'authed': response
-        })
-
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    response.status_code,
-            'response_payload': response.text,
-            'test_results':     discover_test_results,
-        }
-
-    else:
-        request_sent_context = {
-            'covered_biz':      covered_biz,
-            'request_url':      request_url,
-            'response_code':    'invalid url for /discover, no response',
-            'response_payload': '',
-            'test_results':     [],
-        }
-
-    return render(request, 'data_rights_request/request_sent.html', request_sent_context)
-
-
-def setup_pairwise_key(request):
+def setup_pairwise_key(request):   # a.k.a. regsiter agent
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
-    request_obj    = create_setup_pairwise_key_request_json(covered_biz.cb_id)
-
+    request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
     signed_request  = sign_request(signing_key, request_obj)
+
+    logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
 
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
         pairwise_setup_test_results = test_pairwise_key_setup_endpoint(request_obj, response)
-        set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key)
+
+        set_covered_biz_pairwise_key_params(covered_biz, response)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
+            'request_obj':      request_obj,
+            'signed_request':   signed_request,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     pairwise_setup_test_results,
@@ -157,6 +183,9 @@ def setup_pairwise_key(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
+            'request_obj':      request_obj,
+            'signed_request':   signed_request,
             'response_code':    'invalid url for /create_pairwise_key, no response',
             'response_payload': '',
             'test_results':     [],
@@ -165,12 +194,14 @@ def setup_pairwise_key(request):
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
 
-
 def get_agent_information(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token or ""
+
+
+    logger.info('**  get_agent_information(): request_url = ' + request_url)
 
     if (validators.url(request_url)):
         response = get_agent(request_url, bearer_token)
@@ -180,6 +211,7 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
             'response_code':    response.status_code,
             'response_payload': response.text,
             'test_results':     agent_info_test_results,
@@ -189,7 +221,8 @@ def get_agent_information(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
-            'response_code':    'invalid url for /create_pairwise_key, no response',
+            'agent_verify_key': auth_agent_verify_key,
+            'response_code':    'invalid url for /get_agent_information, no response',
             'response_payload': '',
             'test_results':     [],
         }
@@ -197,8 +230,7 @@ def get_agent_information(request):
     return render(request, 'data_rights_request/request_sent.html', request_sent_context)
 
 
-
-def send_request_excercise_rights(request):
+def send_request_exercise_rights(request):
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     user_id_id      = request.POST.get('user_identity')
@@ -206,16 +238,20 @@ def send_request_excercise_rights(request):
     request_action  = request.POST.get('request_action')
     covered_regime  = request.POST.get('covered_regime')
 
-    request_url     = covered_biz.api_root_endpoint + "/v1/data-right-request/"
+    # note - removed trailing slash
+    request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
-    # todo: a missing param in the request_json could cause trouble ...
-    #print('**  send_request_excercise_rights(): request_action = ' + request_action)
+    logger.info(f'**  setup_pairwise_key(): request_url = {request_url}')
 
-    request_json    = create_excercise_request_json(user_identity, covered_biz,
-                                                    request_action, covered_regime)
+    # todo: a missing param in the request_json could cause trouble ...
+    #print('**  send_request_exercise_rights(): request_action = ' + request_action)
+
+    request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
+    logger.info(f'**  setup_pairwise_key(): request_json = {request_json}')
 
     signed_request  = sign_request(signing_key, request_json)
+    logger.info(f'**  setup_pairwise_key(): signed_request = {signed_request}')
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -226,8 +262,11 @@ def send_request_excercise_rights(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'agent_verify_key': auth_agent_verify_key,
+                'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    response.status_code,
-                'response_payload': 'invalid json in response for /v1/data-right-request/',
+                'response_payload': 'invalid json in response for /v1/data-rights-request',
                 'test_results':     [],
             }
 
@@ -239,20 +278,26 @@ def send_request_excercise_rights(request):
             data_rights_transaction: DrpRequestTransaction = create_drp_request_transaction(user_identity,
                                                             covered_biz, request_json, response_json)
 
-        excercise_test_results = test_excercise_endpoint(request_json, response)
+        exercise_test_results = test_exercise_endpoint(request_json, response)
 
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
+            'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    response.status_code,
             'response_payload': response.text,
-            'test_results':     excercise_test_results
+            'test_results':     exercise_test_results
         }
 
     else:
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
+            'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    'invalid url for /excecise , no response',
             'response_payload': '',
             'test_results':     [],
@@ -272,24 +317,24 @@ def send_request_get_status(request):
 
     if (request_id != None):
         if (validators.url(request_url)):
-            # todo: This request SHALL contain an Bearer Token header containing the key for this AA-CB pairwise relationship in it in the form Authorization: Bearer <token>. This token is generated by calling POST /agent/{id} in section 2.06.
+            # This request SHALL contain an Bearer Token header containing the key for this AA-CB pairwise relationship in it in the form Authorization: Bearer <token>. This token is generated by calling POST /agent/{id} in section 2.06.
             response = get_status(request_url, request_id, bearer_token)
-
-            # todo: log request to DB, setup status callback ...
 
             status_test_results = test_status_endpoint(request_url, response)
 
             request_sent_context = {
                 'covered_biz':      covered_biz,
-                'request_url': response.request.url,
-                'response_code': response.status_code,
+                'request_url':      response.request.url,
+                'agent_verify_key': auth_agent_verify_key,
+                'response_code':    response.status_code,
                 'response_payload': response.text,
-                'test_results': status_test_results
+                'test_results':     status_test_results
             }
         else:
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'agent_verify_key': auth_agent_verify_key,
                 'response_code':    'invalid url for /status , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -298,6 +343,7 @@ def send_request_get_status(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      request_url,
+            'agent_verify_key': auth_agent_verify_key,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -322,14 +368,13 @@ def send_request_revoke(request):
 
         if (validators.url(request_url)):
             response = post_revoke(request_url, bearer_token, signed_request)
-
-            # todo: log request to DB, stop status ping ...
-
             revoke_test_results = test_revoked_endpoint(request_url, response)
 
             context = {
                 'covered_biz':      covered_biz,
                 'request_url':      response.request.url,
+                'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    response.status_code,
                 'response_payload': response.text,
                 'test_results':     revoke_test_results,
@@ -339,6 +384,9 @@ def send_request_revoke(request):
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
+                'agent_verify_key': auth_agent_verify_key,
+                'request_obj':      request_json,
+                'signed_request':   signed_request,
                 'response_code':    'invalid url for /revoke , no response',
                 'response_payload': '',
                 'test_results':     [],
@@ -347,6 +395,9 @@ def send_request_revoke(request):
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
+            'agent_verify_key': auth_agent_verify_key,
+            'request_obj':      request_json,
+            'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -375,21 +426,38 @@ def data_rights_request_sent_return(request):
 
 #-------------------------------------------------------------------------------------------------#
 
-def set_covered_biz_well_known_params(covered_biz, response):
-    try:
-        json.loads(response.text)
-    except ValueError as e:
-        logger.warn('**  WARNING - set_covered_biz_well_known_params(): NOT valid json  **')
-        return False
+def get_covered_biz_id_from_cb_id(covered_biz_cb_id):
+    covered_businesses = CoveredBusiness.objects.all()
 
+    for covered_biz in covered_businesses:
+        if covered_biz.cb_id == covered_biz_cb_id:
+            return covered_biz.id
+     
+    return None
+
+
+def set_covered_biz_params_from_service_directory(covered_biz, params_json):
     try:
-        reponse_json = response.json()
-        covered_biz.api_root = reponse_json['api_base']
-        covered_biz.supported_actions = reponse_json['actions']
+        covered_biz.api_root = params_json['api_base']
+        covered_biz.supported_actions = params_json['supported_actions']
         covered_biz.save()
     except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_well_known_params(): missing keys **')
-        return False
+        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        raise e
+
+def create_covered_biz_db_entry_from_service_directory_params (params_json):
+    try:
+        cb_id               = params_json['id']
+        name                = params_json['name']
+        logo                = params_json['logo']
+        api_root_endpoint   = params_json['api_base']
+        supported_actions   = params_json['supported_actions']
+
+        new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
+
+    except KeyError as e:
+        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        raise e
 
 
 def get_covered_biz_form_display(covered_businesses, selected_biz):
@@ -449,26 +517,30 @@ def get_request_actions_form_display (covered_biz):
 
 def sign_request(signing_key, request_obj):
     signed_obj = signing_key.sign(json.dumps(request_obj).encode())
-    bencoded = base64.b64encode(signed_obj)
+    b64encoded = base64.b64encode(signed_obj)
 
-    return bencoded
+    return b64encoded
 
 
 def create_setup_pairwise_key_request_json(covered_biz_id):
-    issued_time     = arrow.get()
-    expires_time    = issued_time.shift(minutes=15)
+    issued_time         = datetime.now(timezone.utc)
+    expires_time        = issued_time + timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_json = {
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz_id,
-        "expires-at":   str(expires_time),
-        "issued-at":    str(issued_time),
+        "issued-at":    issued_timestamp,
+        "expires-at":   expires_timestamp,
     }
+
+    #logger.info(f"**  create_setup_pairwise_key_request_json(): request_json = {request_json}")
 
     return request_json
 
 
-def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, verify_key):
+def set_covered_biz_pairwise_key_params(covered_biz, response):
     try:
         json.loads(response.text)
     except ValueError as e:
@@ -488,20 +560,24 @@ def set_covered_biz_pairwise_key_params(covered_biz, response, signing_key, veri
         covered_biz.save()
 
     except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing keys **')
+        logger.warn('**  WARNING - set_covered_biz_pairwise_key_params(): missing token **')
         return False
 
 
 def create_agent_key_setup_json(agent_id, business_id):
-    issued_time     = datetime.datetime.now()
-    expires_time    = issued_time + datetime.timedelta(min=15)  # 15 minutes from now
+    issued_time     = datetime.now(timezone.utc)
+    expires_time    = issued_time + timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp = expires_time.isoformat(timespec='milliseconds')
 
     agent_key_setup_json = {
         "agent-id": agent_id,
         "business-id": business_id,
-        "expires-at": expires_time,
-        "issued-at": issued_time
+        "issued-at": issued_timestamp,
+        "expires-at": expires_timestamp,
     }
+    
+    #logger.info(f"**  create_agent_key_setup_json(): agent_key_setup_json = {agent_key_setup_json}")
 
     return agent_key_setup_json
 
@@ -522,33 +598,43 @@ def set_agent_info_params(response):
         logger.warn('**  WARNING - set_agent_info_params(): missing keys **')
         return False
 
+
 #--------------------------------------------------------------------------------------------------#
 
-def create_excercise_request_json(user_identity, covered_biz, request_action, covered_regime):
-    issued_time     = arrow.get()
-    expires_time    = issued_time.shift(days=45)
+def create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime):
+    issued_time         = datetime.now(timezone.utc)
+    expires_time        = issued_time + timedelta(minutes=15)  # 15 minutes from now
+    issued_timestamp    = issued_time.isoformat(timespec='milliseconds')
+    expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_obj = {
         # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
-        "expires-at":   str(expires_time),
-        "issued-at":    str(issued_time),
+        "issued-at":    issued_timestamp,
+        "expires-at":   expires_timestamp,
 
         # 2
-        "drp.version": "0.7",
+        "drp.version": "0.9.3",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
         "status_callback": auth_agent_callback_url,
 
         # 3
-        # claims in IANA JSON Web Token Claims page, see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+        # claims in IANA JSON Web Token Claims page, see
+        # https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+
         "name": (user_identity.last_name + ", " + user_identity.first_name),
         "email": user_identity.email,
+        "email_verified": user_identity.email_verified,
         "phone_number": user_identity.phone_number,
+        "phone_number_verified": user_identity.phone_verified,
         "address": user_identity.get_address(),
+        "address_verified": user_identity.address_verified,
     }
+
+    #logger.debug(f"**  create_exercise_request_json(): request_obj = {request_obj}")
 
     return request_obj
 
@@ -579,7 +665,7 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
     )
 
     data_rights_request = DataRightsRequest.objects.create(
-        #request_id not sent on /excercise call
+        #request_id not sent on /exercise call
         #meta                    = request_json['meta'],
         relationships           = request_json['relationships'],
         status_callback         = request_json['status_callback'],
@@ -596,14 +682,14 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         processing_details      = response_json.get('processing_details'),
         reason                  = response_json.get('reason'),
         user_verification_url   = response_json.get('user_verification_url'),
-        # these fields need to be coerced to a datetime from arbitrary timestamps
+        # coerce to a datetime object from timestamp string
         received_at             = enrich_date(response_json.get('received_at')),
         expected_by             = enrich_date(response_json.get('expected_by')),
         # expires_at?
     )
 
     #  todo: this doesn't seem to work ...
-    #excercise_request = DrpRequestStatusPair.create(data_rights_request.id, data_rights_status.id)
+    #exercise_request = DrpRequestStatusPair.create(data_rights_request.id, data_rights_status.id)
 
     transaction = DrpRequestTransaction.objects.create(
         user_ref                = user_identity,
@@ -611,22 +697,19 @@ def create_drp_request_transaction(user_identity, covered_biz, request_json, res
         request_id              = data_rights_status.request_id,
         current_status          = data_rights_status.status,
         # expires_date            = data_rights_status.expires_date,
-
         is_final                = False,
-        #excer_request           = excercise_request
+        #exer_request           = exercise_request
     )
 
     return transaction
 
 
 def enrich_date(dt: Optional[str]):
-    '''
-    arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
-
-    additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
-    '''
+    # arrow.get returns "now" if you pass it None -- we want to just not persist anything in that case.
     if dt is None:
         return None
+
+    # additionally, munge the input string to drop RFC3339 characters which are incorrectly parsed as timestamps
     if re.search(r'-[0-9]{4}$', dt):
         dt = dt[:-5] # sickos.jpg
 
@@ -647,7 +730,14 @@ def get_request_id (covered_biz, user_identity):
 
 #-------------------------------------------------------------------------------------------------#
 
+#GET https://discovery.datarightsprotocol.org/businesses.json
+def get_service_directory_covered_biz (service_dir_biz_url):
+    response = requests.get(service_dir_biz_url)
+    return response
+
+
 #GET /.well-known/data-rights.json
+'''
 def get_well_known(discovery_url, bearer_token=""):
     if bearer_token != "":
         request_headers = {'Authorization': f"Bearer {bearer_token}"}
@@ -656,9 +746,10 @@ def get_well_known(discovery_url, bearer_token=""):
         response = requests.get(discovery_url)
 
     return response
+'''
 
 
-#POST /v1/data-right-request/
+#POST /v1/data-rights-request/
 def post_exercise_rights(request_url, bearer_token, signed_request):
     request_headers = {
         'Authorization': f"Bearer {bearer_token}",
@@ -702,3 +793,6 @@ def get_agent(request_url, bearer_token):
     response = requests.get(request_url, headers=request_headers)
 
     return response
+
+def identity_verification(request):
+    return render(request, 'data_rights_request/identity_verification.html', {})

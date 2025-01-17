@@ -21,7 +21,7 @@ class Migration(migrations.Migration):
                 ('logo', models.ImageField(blank=True, upload_to='company-logos', verbose_name='Logo Image')),
                 ('logo_thumbnail', models.ImageField(blank=True, upload_to='company-logos/thumbnails')),
                 ('subtitle_description', models.TextField(blank=True)),
-                ('verify_key', models.TextField(verbose_name='Hex encoded key to verify signed requests')),
+                ('verify_key', models.TextField(verbose_name='Base64 encoded key to verify signed requests')),
             ],
         ),
     ]

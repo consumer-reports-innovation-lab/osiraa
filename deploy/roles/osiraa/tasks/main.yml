@@ -5,11 +5,18 @@
     state: directory
     path: '{{osiraa_remote_dir}}'
     
-- name: copy local osiraa checkout to instance host
-  synchronize:
-    src: '{{osiraa_source_dir}}/'
+# - name: copy local osiraa checkout to instance host
+#   synchronize:
+#     src: '{{osiraa_source_dir}}/'
+#     dest: '{{osiraa_remote_dir}}/'
+#     delete: yes
+#   register: copy_osiraa
+
+- name: clone osiraa from github
+  git:
+    repo: https://github.com/consumer-reports-innovation-lab/osiraa
     dest: '{{osiraa_remote_dir}}/'
-    delete: yes
+    version: '{{osiraa_version}}'
   register: copy_osiraa
 
 # TODO: install an environment file with secrets, override settings.py SECURITY WARNINGs

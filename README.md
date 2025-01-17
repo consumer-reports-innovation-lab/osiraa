@@ -1,5 +1,4 @@
 ```
-cd drp_aa_mvp
 pip install -r requirements.txt
 sudo apt update
 sudo apt install postgresql
@@ -9,7 +8,8 @@ python manage.py migrate
 
 Create superuser named vscode with password `vscode`
 ```
-python manage.py createsuperuser
+python3 manage.py createsuperuser
+python3 manage.py collectstatic
 ```
 
 Run/deploy the app:

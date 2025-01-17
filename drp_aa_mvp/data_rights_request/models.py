@@ -29,7 +29,6 @@ ACTION_CHOICES = [
     (ACCESS_SPEC , 'access:specific ')
 ]
 
-
 CCPA        = 'ccpa'
 VOLUNTARY   = 'voluntary'
 
@@ -40,9 +39,8 @@ REGIME_CHOICES = [
 
 """
 class RequestMetaData():
-    version     = "0.7"
+    version     = "0.9.3"
 """
-
 
 IN_PROGRESS     = 'in_progress'
 OPEN            = 'open'
@@ -100,7 +98,7 @@ class RequestReason(str, Enum):
     other                       = "other"
     none                        = ""
     
-
+    
 class StateReasons(TypedDict):
     status: RequestStatus
     reasons: List[RequestReason]
@@ -170,7 +168,7 @@ class DataRightsRequest(models.Model):
     identity            = models.ForeignKey(IdentityPayload, null=True, on_delete=models.CASCADE)  
 
     def __str__(self):
-        return f"{self.request_id} asking {self.exercise} for {self.identity}"
+        return f"{self.request_id} asking {self.right} for {self.identity}"
 
 
 class DataRightsStatus(models.Model):

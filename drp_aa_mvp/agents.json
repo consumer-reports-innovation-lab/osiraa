@@ -1,0 +1,11 @@
+[
+    {
+        "id": "CR_AA_DRP_ID_001",
+        "name": "OSIRAA Prod Instance",
+        "verify_key": "aa3543a2fa54a9c977c416077ed28ecb651f6465f30d85fe342ab27c0b29e689",
+        "web_url": "https://osiraa.datarightsprotocol.org",
+        "technical_contact": "john.szinger@consumer.org",
+        "business_contact": "ginny.fahs@consumer.org",
+        "identity_assurance_url": "https://permissionslipcr.com/XXX"
+    }
+]

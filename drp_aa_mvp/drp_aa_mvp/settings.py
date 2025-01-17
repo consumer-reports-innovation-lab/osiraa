@@ -24,6 +24,17 @@ TESTING = 'test'
 ENV = os.environ.get('DJANGO_ENV', DEV)
 
 
+def get(variable, default=''):
+    """
+    To be used over os.environ.get() to avoid deploying local/dev keys in production. Forced
+    env vars to be present.
+    """
+    if ENV == PRODUCTION and variable not in os.environ:
+        raise Exception('Required environment variable not set: {}'.format(variable))
+
+    return os.environ.get(variable, default)
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -31,18 +42,17 @@ ENV = os.environ.get('DJANGO_ENV', DEV)
 SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False #True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'drp-authorized-agent.herokuapp.com', '44.209.94.186', 'osiraa.datarightsprotocol.org']
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'user_identity.apps.UserIdentityConfig',
     'covered_business.apps.CoveredBusinessConfig',
     'data_rights_request.apps.DataRightsRequestConfig',
     'reporting.apps.ReportingConfig',
+    'agent_keys.apps.AgentKeysConfig',
     'drp_pip.apps.DrpPipConfig',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -88,20 +98,18 @@ WSGI_APPLICATION = 'drp_aa_mvp.wsgi.application'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 if ENV in [STAGING, PRODUCTION]:
-    # for heroku deploy ...
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=500, ssl_require=False),
     }
-
 else:
     # for local use only ...
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent',
+            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent09',
             'USER': os.environ.get('POSTGRES_USER') or 'postgres',
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'rootz',
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'postgres',
             'HOST': os.environ.get('POSTGRES_HOST') or 'localhost',
             'PORT': os.environ.get('POSTGRES_PORT') or '5432'
         },
@@ -112,20 +120,33 @@ else:
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator' },
+    { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator' },
+    { 'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator' },
+    { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator' },
 ]
 
+
+# Authorized Agent ID and Name, should match entries in service directory
+AUTHORIZED_AGENT_ID = get('AUTHORIZED_AGENT_ID', 'CR_AA_DRP_ID_001_LOCAL')
+AUTHORIZED_AGENT_NAME = get('AUTHORIZED_AGENT_NAME', 'OSIRAA Local Test Instance')
+WEB_URL = get('WEB_URL', 'http://127.0.0.1:8003')
+
+# Authorized Agent Signing Key (64-bit encoded).  Must remain secret.
+AGENT_SIGNING_KEY_B64 = get('AGENT_SIGNING_KEY_B64', '098LMB1ayJW1N45oQ4J22ddU96gXr3/x5hEmKnPFpP0=')
+
+# Authorized Agent Verify Key (64-bit encoded)
+# This is the public verify key for use in sending DRP requests to CB and PIP partners. 
+# It must match the key decalared in the Service Directory, or else partners' attempt 
+# to validate DRP messages they receive will fail
+AGENT_VERIFY_KEY_B64 = get('AGENT_VERIFY_KEY_B64', 'jkX15E7+NA/0E7K5YAp7+GndMP6/Fa0dJJYyr1GJPoQ=')
+
+SERVICE_DIRECTORY_AGENT_URL = 'https://discovery.datarightsprotocol.org/agents.json'
+SERVICE_DIRECTORY_BUSINESS_URL = 'https://discovery.datarightsprotocol.org/businesses.json'
+
+# CB ID and Name for OSIRPIP 
+OSIRAA_PIP_CB_ID = get('OSIRAA_PIP_CB_ID', "osirpip-cb-local-01") 
+OSIRAA_PIP_CB_NAME = get('OSIRAA_PIP_CB_NAME', 'OSIRPIP Local Test Instance')
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

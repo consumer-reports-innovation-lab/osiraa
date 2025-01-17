@@ -1,28 +1,35 @@
-<br/>
-<h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
-<br/>
-<h3>DRP Data Privacy Request Sent</h3>
+<div style="margin:60px;">
+    <h2>OSIRAA - Open Source Implementer's Reference Authorized Agent</h2>
+    <br/>
+    <h3>DRP Data Privacy Request Sent</h3>
 
-<p><span style="display: inline-block; width: 160px;"><b>Covered Business:</b></span> {{covered_biz.name}}</p>
-<p><span style="display: inline-block; width: 160px;"><b>Request Url:</b></span> {{request_url}}</p>
-<p><span style="display: inline-block; width: 160px;"><b>Response Code:</b></span> {{response_code}}</p>
-<br/>
+    <p><span style="display: inline-block; width: 160px;"><b>Covered Business:</b></span> {{covered_biz.name}}</p>
 
-<p><b>Response Payload:</b></p>
-<p>{{response_payload}}</p>
-<br/>
+    <p><span style="display: inline-block; width: 160px;"><b>Request Url:</b></span> {{request_url}}</p>
 
-<p><b>Test Results:</b></p>
-<p>
-    {% for test_result in test_results %}
-        <span style="display: inline-block; width: 360px;">{{test_result.name}}:</span>{{test_result.result}}</span><br/>
-    {% endfor %}
-</p>
-<br/>
+    <p><span style="display: inline-block; width: 160px;"><b>Agent Verify Key:</b></span> {{agent_verify_key}}</p>
 
-<form action="data_rights_request_sent_return" method="POST" >
-    {% csrf_token %}
-    <input type="hidden" name="sel_covered_biz_id" value={{covered_biz.id}}>
-    <input type="submit" value="Okay">
-</form>
-<br/>
+    <p><b>Request Payload:</b></br>
+    {{request_obj}}</p>
+
+    <p><b>Encoded Payload (Signed Request):</b></br>
+    {{signed_request}}</p>
+
+    <p><span style="display: inline-block; width: 160px;"><b>Response Code:</b></span> {{response_code}}</p>
+
+    <p><b>Response Payload:</b></br>
+    {{response_payload}}</p>
+
+    <p><b>Test Results:</b></p>
+    <p>
+        {% for test_result in test_results %}
+            <span style="display: inline-block; width: 360px;">{{test_result.name}}:</span>{{test_result.result}}</span><br/>
+        {% endfor %}
+    </p>
+    <br/>
+
+    <form action="data_rights_request_sent_return" method="POST">{% csrf_token %}
+        <input type="hidden" name="sel_covered_biz_id" value={{covered_biz.id}}>
+        <input type="submit" value="Okay">
+    </form>
+</div>
