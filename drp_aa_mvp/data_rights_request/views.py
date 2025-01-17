@@ -353,7 +353,7 @@ def send_request_get_status(request):
 
 
 def send_request_revoke(request):
-    logger.log('**  send_request_revoke()  ***')
+    logger.info('**  send_request_revoke()  ***')
 
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
@@ -363,7 +363,7 @@ def send_request_revoke(request):
     request_id      = get_request_id (covered_biz, user_identity)
 
     if (request_id != None):
-        logger.log('**  send_request_revoke(): request_id = ', request_id)
+        logger.info('**  send_request_revoke(): request_id = ', request_id)
 
         reason          = "I don't want my account deleted."
         request_url     =  "/v1/data-rights-request/" + str(request_id)
@@ -371,7 +371,7 @@ def send_request_revoke(request):
         signed_request  = sign_request(signing_key, request_json)
 
         if (validators.url(request_url)):
-            logger.log('**  send_request_revoke(): request_url = ', request_url)
+            logger.info('**  send_request_revoke(): request_url = ', request_url)
 
             response = post_revoke(request_url, bearer_token, signed_request)
             revoke_test_results = test_revoked_endpoint(request_url, response)
@@ -387,7 +387,7 @@ def send_request_revoke(request):
             }
 
         else:
-            logger.log('**  send_request_revoke(): request_url is not valid')
+            logger.info('**  send_request_revoke(): request_url is not valid')
 
             request_sent_context = {
                 'covered_biz':      covered_biz,
@@ -400,7 +400,7 @@ def send_request_revoke(request):
                 'test_results':     [],
             }
     else:
-        logger.log('**  send_request_revoke(): request_id is NONE')
+        logger.info('**  send_request_revoke(): request_id is NONE')
 
         request_sent_context = {
             'covered_biz':      covered_biz,
