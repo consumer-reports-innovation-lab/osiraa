@@ -14,16 +14,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 from django.conf import settings
-from django.core import serializers
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
 from nacl import signing
 from nacl.encoding import Base64Encoder
 from nacl.public import PrivateKey
 
-from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
-                     DrpRequestTransaction, IdentityPayload)
+from .models import (DataRightsRequest, DataRightsStatus, DrpRequestTransaction, IdentityPayload)
 
 from covered_business.models import CoveredBusiness
 from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
@@ -242,16 +239,16 @@ def send_request_exercise_rights(request):
     request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
-    logger.info(f'**  setup_pairwise_key(): request_url = {request_url}')
+    logger.info(f'**  send_request_exercise_rights(): request_url = {request_url}')
 
     # todo: a missing param in the request_json could cause trouble ...
     #print('**  send_request_exercise_rights(): request_action = ' + request_action)
 
     request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
-    logger.info(f'**  setup_pairwise_key(): request_json = {request_json}')
+    logger.info(f'**  send_request_exercise_rights(): request_json = {request_json}')
 
     signed_request  = sign_request(signing_key, request_json)
-    logger.info(f'**  setup_pairwise_key(): signed_request = {signed_request}')
+    #logger.info(f'**  send_request_exercise_rights(): signed_request = {signed_request}')
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -396,8 +393,6 @@ def send_request_revoke(request):
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
             'agent_verify_key': auth_agent_verify_key,
-            'request_obj':      request_json,
-            'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
