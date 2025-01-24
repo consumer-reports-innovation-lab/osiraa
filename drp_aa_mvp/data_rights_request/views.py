@@ -610,7 +610,7 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         "expires-at":   expires_timestamp,
 
         # 2
-        "drp.version": "0.9.3",
+        "drp.version": "0.9.4",
         "exercise": request_action,
         "regime": covered_regime,
         "relationships": [],
