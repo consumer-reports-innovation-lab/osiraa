@@ -10,14 +10,14 @@ from typing import List, Optional, Set, TypedDict
 
 
 class CoveredBusiness(models.Model):
-    ADDRESS     = 'address'
-    EMAIL       = 'eamil'
-    PHONE_NUM   = 'phone_number'
+    ADDRESS = 'address'
+    EMAIL   = 'eamil'
+    PHONE   = 'phone'
 
     SUPPORTED_VERIFICATION_CHOICES = [
         (ADDRESS, 'address'),
         (EMAIL, 'EMAIL'),
-        (PHONE_NUM, 'phone_number')
+        (PHONE, 'phone')
     ]
 
     OPT_OUT     = 'opt_out'
