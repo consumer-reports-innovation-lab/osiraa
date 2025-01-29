@@ -11,12 +11,12 @@ from typing import List, Optional, Set, TypedDict
 
 class CoveredBusiness(models.Model):
     ADDRESS = 'address'
-    EMAIL   = 'eamil'
+    EMAIL   = 'email'
     PHONE   = 'phone'
 
     SUPPORTED_VERIFICATION_CHOICES = [
         (ADDRESS, 'address'),
-        (EMAIL, 'EMAIL'),
+        (EMAIL, 'email'),
         (PHONE, 'phone')
     ]
 
