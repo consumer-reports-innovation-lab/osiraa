@@ -435,6 +435,10 @@ def set_covered_biz_params_from_service_directory(covered_biz, params_json):
     try:
         covered_biz.api_root = params_json['api_base']
         covered_biz.supported_actions = params_json['supported_actions']
+        
+        if params_json['supported_verifications'] != None:
+            covered_biz.supported_verifications = params_json['supported_verifications']
+
         covered_biz.save()
     except KeyError as e:
         logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
@@ -620,11 +624,14 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         # claims in IANA JSON Web Token Claims page, see
         # https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
 
+        # todo: lookup covered_business' supported_verifications and only send those ...
         "name": (user_identity.last_name + ", " + user_identity.first_name),
         "email": user_identity.email,
         "email_verified": user_identity.email_verified,
         "phone_number": user_identity.phone_number,
         "phone_number_verified": user_identity.phone_verified,
+
+        # todo: correctly format address fields ...
         "address": user_identity.get_address(),
         "address_verified": user_identity.address_verified,
     }
