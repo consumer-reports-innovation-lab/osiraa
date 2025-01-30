@@ -627,8 +627,7 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         request_obj["phone_number_verified"] = user_identity.phone_verified
 
     if "address" in covered_biz.supported_verifications:
-        # todo: correctly format address fields ...
-        request_obj["address"] = user_identity.get_address()
+        request_obj["address"] = user_identity.get_address_json()
         request_obj["address_verified"] = user_identity.address_verified
 
     logger.info(f"**  create_exercise_request_json(): request_obj = {request_obj}")
