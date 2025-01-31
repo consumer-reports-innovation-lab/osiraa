@@ -613,7 +613,7 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
         "business-id":  covered_biz.cb_id,
         "issued-at":    issued_timestamp,
         "expires-at":   expires_timestamp,
-        "drp.version": "0.9.4",
+        "drp.version": "1.0",
         "exercise": request_action,
         "regime": covered_regime,
         "status_callback": auth_agent_callback_url,
