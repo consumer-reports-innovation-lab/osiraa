@@ -432,7 +432,7 @@ def update_covered_biz_params_from_service_directory(covered_biz, params_json):
         covered_biz.api_root = params_json['api_base']
         covered_biz.supported_actions = params_json['supported_actions']
         
-        if params_json['supported_verifications'] != None:
+        if 'supported_verifications' in params_json:
             covered_biz.supported_verifications = params_json['supported_verifications']
 
         covered_biz.save()
@@ -447,11 +447,14 @@ def create_covered_biz_db_entry_from_service_directory(params_json):
         logo                    = params_json['logo']
         api_root_endpoint       = params_json['api_base']
         supported_actions       = params_json['supported_actions']
-        supported_verifications = params_json['supported_verifications']
+
 
         new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, 
-                                api_root_endpoint=api_root_endpoint, supported_actions=supported_actions,
-                                supported_verifications=supported_verifications)
+                                api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
+
+        if 'supported_verifications' in params_json:
+            supported_verifications = params_json['supported_verifications']
+            new_covered_biz.supported_verifications = supported_verifications
 
     except KeyError as e:
         logger.warn('**  WARNING - create_covered_biz_db_entry_from_service_directory(): missing keys **')
