@@ -39,7 +39,7 @@ def test_exercise_endpoint(request_json, response):
         - “business-id” - a string identifying the Covered Business which the request is being sent to
         - “issued-at” - an ISO 8601-encoded timestamp expressing when the request was created
         - “expires-at” - an ISO 8601-encoded timestamp expressing when the request should no longer be considered viable
-        - “drp.version” - a string referencing the current protocol version "0.9.3"
+        - “drp.version” - a string referencing the current protocol version "1.0"
         - “exercise” - string specifying the Rights Action: [ access | deletion | sale:opt_out | sale:opt_in | access:categories | access:specific ]
         - “regime” (optional) - a string specifying the legal regime under which the Data Request is being taken: [ ccpa | voluntary ]
         - “relationships” (optional) - a list of string 'hints' for the Covered Business

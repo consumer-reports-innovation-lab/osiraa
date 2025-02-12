@@ -1,8 +1,8 @@
 # OSIRAA - Open Source Implementers’ Reference Authorized Agent
 
-Version 0.9.3 - Updated November 2024
+Version 1.0 - Updated January 2025
 
-## OSIRAA is a live and available for use at [https://osiraa.datarightsprotocol.org/](https://osiraa.datarightsprotocol.org/).
+## OSIRAA 1.0 is a live and available for use at [https://osiraa.datarightsprotocol.org/](https://osiraa.datarightsprotocol.org/).
 
 ## How to Use this App:
 OSIRAA (Open Source Implementers’ Reference Authorized Agent) is a test suite designed to simulate the role of an Authorized Agent in a Data Rights Protocol (DRP) environment.    The application tests for the availability, correctness and completeness of API endpoints of a Privacy Infrastructure Provider (PIP) or Covered Business (CB) partner application.  See <a href="https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md" target="blank">https://github.com/consumer-reports-innovation-lab/data-rights-protocol/blob/main/data-rights-protocol.md</a> for more info on DRP system roles and API specification.

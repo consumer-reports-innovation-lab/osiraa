@@ -14,16 +14,13 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 from django.conf import settings
-from django.core import serializers
-from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 
 from nacl import signing
 from nacl.encoding import Base64Encoder
 from nacl.public import PrivateKey
 
-from .models import (DataRightsRequest, DataRightsStatus, DrpRequestStatusPair,
-                     DrpRequestTransaction, IdentityPayload)
+from .models import (DataRightsRequest, DataRightsStatus, DrpRequestTransaction, IdentityPayload)
 
 from covered_business.models import CoveredBusiness
 from reporting.views import (test_agent_information_endpoint, test_exercise_endpoint, #test_discovery_endpoint, 
@@ -74,7 +71,6 @@ logger.info(f"**  auth_agent_callback_url   = {auth_agent_callback_url}")
 logger.info(f"**  auth_agent_signing_key    = {auth_agent_signing_key}")
 logger.info(f"**  auth_agent_verify_key     = {auth_agent_verify_key}")
 
-
 selected_covered_biz: Optional[CoveredBusiness] = None
 
 
@@ -93,7 +89,7 @@ def index(request):
     return render(request, 'data_rights_request/index.html', context)
 
 
-# call to the service directory returns the info for all CB's, same as what was in the .well_known endpoint for each CB
+# call to the service directory returns the info for all CB's
 def refresh_service_directory_data (request):
     request_url = service_directory_businesses_url
     response = get_service_directory_covered_biz(request_url)
@@ -110,9 +106,9 @@ def refresh_service_directory_data (request):
 
         if covered_biz_id is not None:
             covered_biz = CoveredBusiness.objects.get(pk=covered_biz_id)
-            set_covered_biz_params_from_service_directory(covered_biz, response_item)
+            update_covered_biz_params_from_service_directory(covered_biz, response_item)
         else:
-            create_covered_biz_db_entry_from_service_directory_params(response_item)    
+            create_covered_biz_db_entry_from_service_directory(response_item)    
      
         # todo: handle case where SD enrty is removed - mark CB in DB as 'removed' ...
 
@@ -121,13 +117,11 @@ def refresh_service_directory_data (request):
     user_identities             = IdentityUser.objects.all()
     covered_businesses          = CoveredBusiness.objects.all()
     covered_biz_id              = request.POST.get('sel_covered_biz_id')
-    #selected_covered_biz        = CoveredBusiness.objects.get(pk=covered_biz_id)
-    #covered_biz_form_display    = get_covered_biz_form_display(covered_businesses, selected_covered_biz)
     request_actions             = get_request_actions_form_display(selected_covered_biz)
 
     context = {
         'user_identities':      user_identities,
-        'covered_businesses':   covered_businesses, #covered_biz_form_display,
+        'covered_businesses':   covered_businesses,
         'selected_covered_biz': selected_covered_biz,
         'request_actions':      request_actions
     }
@@ -160,7 +154,7 @@ def setup_pairwise_key(request):   # a.k.a. regsiter agent
     request_obj     = create_setup_pairwise_key_request_json(covered_biz.cb_id)
     signed_request  = sign_request(signing_key, request_obj)
 
-    logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
+    #logger.info('**  setup_pairwise_key(): request_url = ' + request_url)
 
     if (validators.url(request_url)):
         response = post_agent(request_url, signed_request)
@@ -200,8 +194,7 @@ def get_agent_information(request):
     request_url     = covered_biz.api_root_endpoint + f"/v1/agent/{auth_agent_drp_id}"
     bearer_token    = covered_biz.auth_bearer_token or ""
 
-
-    logger.info('**  get_agent_information(): request_url = ' + request_url)
+    #logger.info('**  get_agent_information(): request_url = ' + request_url)
 
     if (validators.url(request_url)):
         response = get_agent(request_url, bearer_token)
@@ -242,16 +235,16 @@ def send_request_exercise_rights(request):
     request_url     = covered_biz.api_root_endpoint + "/v1/data-rights-request"
     bearer_token    = covered_biz.auth_bearer_token
 
-    logger.info(f'**  setup_pairwise_key(): request_url = {request_url}')
+    logger.info(f'**  send_request_exercise_rights(): request_url = {request_url}')
 
     # todo: a missing param in the request_json could cause trouble ...
-    #print('**  send_request_exercise_rights(): request_action = ' + request_action)
+    #logger.info('**  send_request_exercise_rights(): request_action = ' + request_action)
 
     request_json    = create_exercise_request_json(user_identity, covered_biz, request_action, covered_regime)
-    logger.info(f'**  setup_pairwise_key(): request_json = {request_json}')
+    #logger.info(f'**  send_request_exercise_rights(): request_json = {request_json}')
 
     signed_request  = sign_request(signing_key, request_json)
-    logger.info(f'**  setup_pairwise_key(): signed_request = {signed_request}')
+    #logger.info(f'**  send_request_exercise_rights(): signed_request = {signed_request}')
 
     if (validators.url(request_url)):
         response = post_exercise_rights(request_url, bearer_token, signed_request)
@@ -406,8 +399,6 @@ def send_request_revoke(request):
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
             'agent_verify_key': auth_agent_verify_key,
-            'request_obj':      request_json,
-            'signed_request':   signed_request,
             'response_code':    'no request id for this user and covered business, request not sent',
             'response_payload': '',
             'test_results':     [],
@@ -446,27 +437,37 @@ def get_covered_biz_id_from_cb_id(covered_biz_cb_id):
     return None
 
 
-def set_covered_biz_params_from_service_directory(covered_biz, params_json):
+def update_covered_biz_params_from_service_directory(covered_biz, params_json):
     try:
         covered_biz.api_root = params_json['api_base']
         covered_biz.supported_actions = params_json['supported_actions']
+        
+        if 'supported_verifications' in params_json:
+            covered_biz.supported_verifications = params_json['supported_verifications']
+
         covered_biz.save()
     except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        logger.warn('**  WARNING - update_covered_biz_params_from_service_directory(): missing keys **')
         raise e
 
-def create_covered_biz_db_entry_from_service_directory_params (params_json):
+def create_covered_biz_db_entry_from_service_directory(params_json):
     try:
-        cb_id               = params_json['id']
-        name                = params_json['name']
-        logo                = params_json['logo']
-        api_root_endpoint   = params_json['api_base']
-        supported_actions   = params_json['supported_actions']
+        cb_id                   = params_json['id']
+        name                    = params_json['name']
+        logo                    = params_json['logo']
+        api_root_endpoint       = params_json['api_base']
+        supported_actions       = params_json['supported_actions']
 
-        new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
+
+        new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, 
+                                api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
+
+        if 'supported_verifications' in params_json:
+            supported_verifications = params_json['supported_verifications']
+            new_covered_biz.supported_verifications = supported_verifications
 
     except KeyError as e:
-        logger.warn('**  WARNING - set_covered_biz_params_from_service_directory(): missing keys **')
+        logger.warn('**  WARNING - create_covered_biz_db_entry_from_service_directory(): missing keys **')
         raise e
 
 
@@ -619,33 +620,31 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
     expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_obj = {
-        # 1
         "agent-id":     auth_agent_drp_id,
         "business-id":  covered_biz.cb_id,
         "issued-at":    issued_timestamp,
         "expires-at":   expires_timestamp,
-
-        # 2
-        "drp.version": "0.9.4",
+        "drp.version": "1.0",
         "exercise": request_action,
         "regime": covered_regime,
-        "relationships": [],
         "status_callback": auth_agent_callback_url,
-
-        # 3
-        # claims in IANA JSON Web Token Claims page, see
-        # https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
-
         "name": (user_identity.last_name + ", " + user_identity.first_name),
-        "email": user_identity.email,
-        "email_verified": user_identity.email_verified,
-        "phone_number": user_identity.phone_number,
-        "phone_number_verified": user_identity.phone_verified,
-        "address": user_identity.get_address(),
-        "address_verified": user_identity.address_verified,
     }
 
-    #logger.debug(f"**  create_exercise_request_json(): request_obj = {request_obj}")
+    # identity claims, see https://www.iana.org/assignments/jwt/jwt.xhtml#claims for details
+    if "email" in covered_biz.supported_verifications:
+        request_obj["email"] = user_identity.email
+        request_obj["email_verified"] = user_identity.email_verified
+
+    if "phone" in covered_biz.supported_verifications:
+        request_obj["phone_number"] = user_identity.phone_number
+        request_obj["phone_number_verified"] = user_identity.phone_verified
+
+    if "address" in covered_biz.supported_verifications:
+        request_obj["address"] = user_identity.get_address_json()
+        request_obj["address_verified"] = user_identity.address_verified
+
+    logger.info(f"**  create_exercise_request_json(): request_obj = {request_obj}")
 
     return request_obj
 
