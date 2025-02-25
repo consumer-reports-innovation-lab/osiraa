@@ -38,7 +38,7 @@ def get(variable, default=''):
 SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)'
 
 DEBUG = False if ENV == PRODUCTION else True
-ALLOWED_HOSTS = [os.environ.get('ALLOWED_HOSTS', '*')]
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 INSTALLED_APPS = [
