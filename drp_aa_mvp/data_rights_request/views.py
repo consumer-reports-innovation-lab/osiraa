@@ -452,12 +452,11 @@ def update_covered_biz_params_from_service_directory(covered_biz, params_json):
 
 def create_covered_biz_db_entry_from_service_directory(params_json):
     try:
-        cb_id                   = params_json['id']
-        name                    = params_json['name']
-        logo                    = params_json['logo']
-        api_root_endpoint       = params_json['api_base']
-        supported_actions       = params_json['supported_actions']
-
+        cb_id               = params_json['id']
+        name                = params_json['name']
+        logo                = params_json['logo']
+        api_root_endpoint   = params_json['api_base']
+        supported_actions   = params_json['supported_actions']
 
         new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, 
                                 api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
@@ -465,6 +464,7 @@ def create_covered_biz_db_entry_from_service_directory(params_json):
         if 'supported_verifications' in params_json:
             supported_verifications = params_json['supported_verifications']
             new_covered_biz.supported_verifications = supported_verifications
+            new_covered_biz.save()
 
     except KeyError as e:
         logger.warn('**  WARNING - create_covered_biz_db_entry_from_service_directory(): missing keys **')
@@ -544,7 +544,7 @@ def create_setup_pairwise_key_request_json(covered_biz_id):
         "business-id":  covered_biz_id,
         "issued-at":    issued_timestamp,
         "expires-at":   expires_timestamp,
-        "drp.version":  "0.9.4",
+        "drp.version":  "1.0",
     }
 
     #logger.info(f"**  create_setup_pairwise_key_request_json(): request_json = {request_json}")
@@ -620,10 +620,10 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
     expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_obj = {
-        "agent-id":     auth_agent_drp_id,
-        "business-id":  covered_biz.cb_id,
-        "issued-at":    issued_timestamp,
-        "expires-at":   expires_timestamp,
+        "agent-id": auth_agent_drp_id,
+        "business-id": covered_biz.cb_id,
+        "issued-at": issued_timestamp,
+        "expires-at": expires_timestamp,
         "drp.version": "1.0",
         "exercise": request_action,
         "regime": covered_regime,
