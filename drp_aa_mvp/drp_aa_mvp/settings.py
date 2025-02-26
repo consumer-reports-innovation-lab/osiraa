@@ -29,7 +29,7 @@ def get(variable, default=''):
     To be used over os.environ.get() to avoid deploying local/dev keys in production. Forced
     env vars to be present.
     """
-    if ENV == PRODUCTION and variable not in os.environ:
+    if (ENV == PRODUCTION or ENV == STAGING) and variable not in os.environ:
         raise Exception('Required environment variable not set: {}'.format(variable))
 
     return os.environ.get(variable, default)
@@ -42,7 +42,7 @@ def get(variable, default=''):
 SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False #True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
