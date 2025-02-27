@@ -29,7 +29,7 @@ def get(variable, default=''):
     To be used over os.environ.get() to avoid deploying local/dev keys in production. Forced
     env vars to be present.
     """
-    if (ENV == PRODUCTION or ENV == STAGING) and variable not in os.environ:
+    if ENV == PRODUCTION and variable not in os.environ:
         raise Exception('Required environment variable not set: {}'.format(variable))
 
     return os.environ.get(variable, default)
@@ -107,9 +107,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent09',
+            'NAME': os.environ.get('POSTGRES_NAME') or 'authorizedagent',
             'USER': os.environ.get('POSTGRES_USER') or 'postgres',
-            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'postgres',
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD') or 'rootz',
             'HOST': os.environ.get('POSTGRES_HOST') or 'localhost',
             'PORT': os.environ.get('POSTGRES_PORT') or '5432'
         },
