@@ -346,6 +346,8 @@ def send_request_get_status(request):
 
 
 def send_request_revoke(request):
+    logger.log('**  send_request_revoke()  ***')
+
     covered_biz_id  = request.POST.get('sel_covered_biz_id')
     covered_biz     = CoveredBusiness.objects.get(pk=covered_biz_id)
     user_id_id      = request.POST.get('user_identity')
@@ -354,12 +356,16 @@ def send_request_revoke(request):
     request_id      = get_request_id (covered_biz, user_identity)
 
     if (request_id != None):
+        logger.log('**  send_request_revoke(): request_id = ', request_id)
+
         reason          = "I don't want my account deleted."
         request_url     =  "/v1/data-rights-request/" + str(request_id)
         request_json    = create_revoke_request_json(reason)
         signed_request  = sign_request(signing_key, request_json)
 
         if (validators.url(request_url)):
+            logger.log('**  send_request_revoke(): request_url = ', request_url)
+
             response = post_revoke(request_url, bearer_token, signed_request)
             revoke_test_results = test_revoked_endpoint(request_url, response)
 
@@ -374,17 +380,21 @@ def send_request_revoke(request):
             }
 
         else:
+            logger.log('**  send_request_revoke(): request_url is not valid')
+
             request_sent_context = {
                 'covered_biz':      covered_biz,
                 'request_url':      request_url,
                 'agent_verify_key': auth_agent_verify_key,
                 'request_obj':      request_json,
                 'signed_request':   signed_request,
-                'response_code':    'invalid url for /revoke , no response',
+                'response_code':    'invalid url for /revoke, no response',
                 'response_payload': '',
                 'test_results':     [],
             }
     else:
+        logger.log('**  send_request_revoke(): request_id is NONE')
+
         request_sent_context = {
             'covered_biz':      covered_biz,
             'request_url':      "/v1/data-rights-request/{{None}}",
@@ -443,12 +453,11 @@ def update_covered_biz_params_from_service_directory(covered_biz, params_json):
 
 def create_covered_biz_db_entry_from_service_directory(params_json):
     try:
-        cb_id                   = params_json['id']
-        name                    = params_json['name']
-        logo                    = params_json['logo']
-        api_root_endpoint       = params_json['api_base']
-        supported_actions       = params_json['supported_actions']
-
+        cb_id               = params_json['id']
+        name                = params_json['name']
+        logo                = params_json['logo']
+        api_root_endpoint   = params_json['api_base']
+        supported_actions   = params_json['supported_actions']
 
         new_covered_biz     = CoveredBusiness.objects.create(name=name, cb_id=cb_id, logo=logo, 
                                 api_root_endpoint=api_root_endpoint, supported_actions=supported_actions)
@@ -536,6 +545,7 @@ def create_setup_pairwise_key_request_json(covered_biz_id):
         "business-id":  covered_biz_id,
         "issued-at":    issued_timestamp,
         "expires-at":   expires_timestamp,
+        "drp.version":  "1.0",
     }
 
     #logger.info(f"**  create_setup_pairwise_key_request_json(): request_json = {request_json}")
@@ -611,10 +621,10 @@ def create_exercise_request_json(user_identity, covered_biz, request_action, cov
     expires_timestamp   = expires_time.isoformat(timespec='milliseconds')
 
     request_obj = {
-        "agent-id":     auth_agent_drp_id,
-        "business-id":  covered_biz.cb_id,
-        "issued-at":    issued_timestamp,
-        "expires-at":   expires_timestamp,
+        "agent-id": auth_agent_drp_id,
+        "business-id": covered_biz.cb_id,
+        "issued-at": issued_timestamp,
+        "expires-at": expires_timestamp,
         "drp.version": "1.0",
         "exercise": request_action,
         "regime": covered_regime,

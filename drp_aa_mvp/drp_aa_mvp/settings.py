@@ -13,10 +13,6 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-
 DEV = 'dev'
 STAGING = 'staging'
 PRODUCTION = 'production'
@@ -41,9 +37,7 @@ def get(variable, default=''):
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-%k6u+v8prz33iu179r=u^x=nqgf3eaged+x5h93rs(kob^t6u)'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+DEBUG = False if ENV == PRODUCTION else True
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -157,17 +151,8 @@ USE_I18N = True
 USE_L10N = True
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.2/howto/static-files/
-
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
