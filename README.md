@@ -65,6 +65,19 @@ python3 -m venv env
 . ./env/bin/activate
 ```
 
+Note: if your python verion is too high, you'll encounter errors installing the project.  To avoid this you can create a virtual environment with a specific version of python (assuming it's installed on your system)
+
+```
+python3.11 -m venv env
+. ./env/bin/activate
+```
+
+Upgrade pip, setuptools, and wheel:
+
+```
+pip install --upgrade pip setuptools wheel
+```
+
 Install requirements:  
 
 ```
