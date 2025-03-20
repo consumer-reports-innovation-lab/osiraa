@@ -6,7 +6,7 @@ botocore==1.21.42
 CacheControl==0.12.10
 cachetools==4.2.4
 certifi==2021.5.30
-cffi==1.15.0
+cffi==1.16.0
 charset-normalizer==2.0.5
 decorator==5.1.1
 distlib==0.3.4
@@ -42,7 +42,7 @@ mccabe==0.6.1
 msgpack==1.0.3
 packaging==21.3
 phonenumbers==8.12.35
-Pillow==9.0.1
+Pillow==10.4.0
 platformdirs==2.5.2
 psycopg2==2.9.9
 psycopg2-binary==2.9.9
