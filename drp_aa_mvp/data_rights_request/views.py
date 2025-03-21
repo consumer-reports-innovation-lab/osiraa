@@ -446,6 +446,7 @@ def update_covered_biz_params_from_service_directory(covered_biz, params_json):
             covered_biz.supported_verifications = params_json['supported_verifications']
 
         covered_biz.save()
+
     except KeyError as e:
         logger.warn('**  WARNING - update_covered_biz_params_from_service_directory(): missing keys **')
         raise e
