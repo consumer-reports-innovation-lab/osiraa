@@ -179,5 +179,16 @@ pipeline {
     cleanup {
       cleanWs()
     }
+      success {
+      script {
+        def versionPattern = ~/^release_(?:[a-zA-Z0-9]+_)?\d+\.\d+[a-zA-Z]?$|^release_[a-zA-Z0-9]+_\d+$/
+        if (BUILD_ENABLED.toBoolean() && params.GIT_REF ==~ versionPattern) {
+          build job: '../../IL_Veracode/Data_Rights_Protocol_OSIRAA_veracode_static_scan', parameters: [
+            gitParameter(name: 'GIT_REF', value: DOCKER_IMAGE_TAG),
+          ],
+          wait: false           
+        }  
+      }
+    }
   }
 }
