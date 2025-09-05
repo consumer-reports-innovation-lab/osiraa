@@ -256,7 +256,7 @@ def validate_message_to_agent(agent: AuthorizedAgent, request: HttpRequest) -> d
     logger.debug(f"**    b64decoded_body = {b64decoded_body}")
     
     try:
-        serialized_message = verify_key.verify(decoded_body)
+        serialized_message = verify_key.verify(b64decoded_body)
         logger.debug(f"**    serialized_message = {serialized_message}")
 
     except nacl.exceptions.BadSignatureError as e:
