@@ -21,9 +21,6 @@ from .models import (AuthorizedAgent, MessageValidationException,
                      DataRightsRequest, DataRightsStatus)
 from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
 
-# todo: cross-module import ...
-# from data_rights_request.models import ACTION_CHOICES, REGIME_CHOICES
-
 import logging
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)
@@ -168,20 +165,23 @@ def exercise(request: HttpRequest):
 
     request_id = uuid.uuid4()
 
+    '''
+    relationships = [] if not message['relationships'] else message['relationships'],
+    status_callback = '' if not message['status_callback'] else message['status_callback'],
     db_right = next(filter(lambda t: { t[1] == message['exercise'] }, ACTION_CHOICES))[0]
     db_regime = next(filter(lambda t: { t[1] == message['regime'] }, REGIME_CHOICES))[0]
 
     # we now have a dict with the DRP request in it, the message has been
-    # authenticated to the key associated with the bearer token!
+    # authenticated to the key associated with the bearer token
     data_rights_request = DataRightsRequest.objects.create(
-        aa_id                   = agent.aa_id,
-        request_id              = request_id,
-        relationships           = message['relationships'],
-        status_callback         = message['status_callback'],
-        regime                  = db_regime,
-        right                   = db_right,
-        # todo: persist claims ... ?
+        aa_id               = agent.aa_id,
+        request_id          = request_id,
+        relationships       = relationships,
+        status_callback     = status_callback,
+        regime              = db_regime,
+        right               = db_right,
     )
+    '''
 
     status = dict(
         # required fields
@@ -195,10 +195,12 @@ def exercise(request: HttpRequest):
         # expected_by             = enrich_date(response_json.get('expected_by')),
     )
 
+    '''
     data_rights_status = DataRightsStatus.objects.create(
         aa_id                   = agent.aa_id,
         **status
     )
+    '''
 
     return JsonResponse(status)
 
