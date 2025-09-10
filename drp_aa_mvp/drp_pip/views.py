@@ -132,13 +132,8 @@ def exercise(request: HttpRequest):
     #  todo: why is the body empty when the message arrives ???
     logger.info(f'**  drp_pip.exercise(): request.body = {request.body}')
 
-    logger.info(f'**  drp_pip.exercise(): data = {request.POST.data}')
-
     body_str = request.body.decode();
     logger.info(f'**  drp_pip.exercise(): body_str = {body_str}')
-
-    #bytestring = b'Hello, world!'
-    #string = bytestring.decode('utf-8') 
 
     bearer_token = validate_auth_header(request)
 
