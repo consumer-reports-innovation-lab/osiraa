@@ -68,5 +68,5 @@ uritemplate==4.1.1
 urllib3==1.26.6
 validators==0.20.0
 virtualenv==20.14.1
-Werkzeug==2.0.1
+Werkzeug==3.1.4
 whitenoise==5.3.0
