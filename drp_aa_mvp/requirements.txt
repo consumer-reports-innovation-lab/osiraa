@@ -30,7 +30,7 @@ djangorestframework-simplejwt==4.8.0
 drf-api-tracking==1.8.0
 factory-boy==3.2.0
 Faker==8.13.2
-filelock==3.7.1
+filelock==3.20.3
 flake8==3.9.2
 grpcio==1.59.0
 grpcio-status==1.59.0
