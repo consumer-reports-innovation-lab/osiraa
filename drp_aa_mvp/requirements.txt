@@ -35,7 +35,7 @@ flake8==3.9.2
 grpcio==1.59.0
 grpcio-status==1.59.0
 gunicorn==20.1.0
-httplib2==0.20.2
+httplib2==0.32.0
 idna==3.2
 jmespath==0.10.0
 mccabe==0.6.1
